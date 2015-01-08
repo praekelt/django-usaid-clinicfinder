@@ -1,0 +1,11 @@
+Django==1.7.2
+django-hstore==1.3.5
+djangorestframework==2.4.3 #3.x does not support gis yet
+djangorestframework-hstore==1.1
+djangorestframework-gis==0.7
+dj-database-url
+psycopg2
+raven
+django-grappelli==2.6.3
+gunicorn
+django-filter
