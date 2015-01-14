@@ -1,5 +1,10 @@
 from django_usaid_clinicfinder.settings import *  # flake8: noqa
 
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgis://postgis_test:@localhost/django_usaid_clinicfinder'),
+}
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'TESTSEKRET'
 

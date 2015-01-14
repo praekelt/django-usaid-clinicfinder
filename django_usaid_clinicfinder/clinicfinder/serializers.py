@@ -18,7 +18,7 @@ class LocationSerializer(GeoModelSerializer):
 
 
 class PointOfInterestSerializer(HyperlinkedModelSerializer):
-    location = LocationSerializer(many=False, read_only=True)
+    location = LocationSerializer(many=False, read_only=False)
 
     class Meta:
         model = PointOfInterest
@@ -39,7 +39,7 @@ class LookupLocationSerializer(GeoModelSerializer):
 
 
 class LookupPointOfInterestSerializer(HyperlinkedModelSerializer):
-    # location = LocationSerializer(many=False, read_only=True)
+    location = LookupLocationSerializer(many=False, read_only=False)
 
     class Meta:
         model = LookupPointOfInterest
