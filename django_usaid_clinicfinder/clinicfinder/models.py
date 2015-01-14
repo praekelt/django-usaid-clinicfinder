@@ -9,21 +9,22 @@ class HStoreModel(djangomodels.Model):
     class Meta:
         abstract = True
 
+
 class Location(gismodels.Model):
     point = gismodels.PointField()
     created_at = djangomodels.DateTimeField(auto_now_add=True)
     updated_at = djangomodels.DateTimeField(auto_now=True)
 
-    # GeoDjango-specific overriding the default manager with a 
+    # GeoDjango-specific overriding the default manager with a
     # GeoManager instance.
     objects = gismodels.GeoManager()
 
-    # Returns the string representation of the model.
-    def __unicode__(self):              # __unicode__ on Python 2
+    def __unicode__(self):
         return "%s" % (self.point)
 
 
 class PointOfInterest(HStoreModel):
+
     """
     Extendable point of interest model
     """
@@ -33,3 +34,34 @@ class PointOfInterest(HStoreModel):
     data = hstore.DictionaryField()
     location = djangomodels.ForeignKey(Location, related_name='location')
 
+
+class LookupLocation(gismodels.Model):
+
+    """
+    Inbound lookups are stored here and trigger
+    """
+    point = gismodels.PointField()
+
+    created_at = djangomodels.DateTimeField(auto_now_add=True)
+    updated_at = djangomodels.DateTimeField(auto_now=True)
+
+    # GeoDjango-specific overriding the default manager with a
+    # GeoManager instance.
+    objects = gismodels.GeoManager()
+
+    def __unicode__(self):
+        return "%s" % (self.point)
+
+
+class LookupPointOfInterest(HStoreModel):
+
+    """
+    Extendable point of interest request model
+    """
+    created_at = djangomodels.DateTimeField(auto_now_add=True)
+    updated_at = djangomodels.DateTimeField(auto_now=True)
+    # can pass attributes like null, blank, etc.
+    search = hstore.DictionaryField()
+    response = hstore.DictionaryField()
+    location = djangomodels.ForeignKey(
+        LookupLocation, related_name='lookup_location')
