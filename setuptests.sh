@@ -1,5 +1,6 @@
 #!/bin/bash
 psql -c 'create database django_usaid_clinicfinder;' -U postgres
+psql -c 'CREATE EXTENSION hstore;' -U postgres -d django_usaid_clinicfinder
 psql -c 'CREATE EXTENSION postgis;' -U postgres -d django_usaid_clinicfinder
 psql -c 'CREATE EXTENSION postgis_topology;' -U postgres -d django_usaid_clinicfinder
 
