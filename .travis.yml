@@ -32,4 +32,4 @@ before_script:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - ./django_usaid_clinicfinder/runtests.py
+  - ./django_usaid_clinicfinder/runtests.sh
