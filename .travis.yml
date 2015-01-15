@@ -1,7 +1,10 @@
 language: python
 python:
   - "2.7"
+before_script:
+  - ./setuptests.sh
 install:
   - "pip install -r ./django_usaid_clinicfinder/requirements.txt"
 script:
-  - ./django_usaid_clinicfinder/runtests.sh
+  - python ./django_usaid_clinicfinder/manage.py syncdb --noinput
+  - python ./django_usaid_clinicfinder/manage.py test
