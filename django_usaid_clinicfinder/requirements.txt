@@ -9,3 +9,7 @@ raven
 django-grappelli==2.6.3
 gunicorn
 django-filter
+suds==0.4
+celery
+django-celery
+redis
