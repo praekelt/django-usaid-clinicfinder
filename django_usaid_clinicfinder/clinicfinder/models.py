@@ -64,4 +64,30 @@ class LookupPointOfInterest(HStoreModel):
     search = hstore.DictionaryField()
     response = hstore.DictionaryField()
     location = djangomodels.ForeignKey(
-        LookupLocation, related_name='lookup_location')
+        LookupLocation, related_name='lookup_location',
+        blank=True, null=True)
+
+
+class LBSRequest(HStoreModel):
+
+    """
+    Inbound request for LBS lookup. Triggers LBS API call.
+    """
+    created_at = djangomodels.DateTimeField(auto_now_add=True)
+    updated_at = djangomodels.DateTimeField(auto_now=True)
+    search = hstore.DictionaryField()
+    response = hstore.DictionaryField(blank=True, null=True)
+    pointofinterest = djangomodels.ForeignKey(
+        LookupPointOfInterest, related_name='pointofinterest')
+
+# Make sure new LBS Requests tasks are run via Celery
+from .tasks import lbs_lookup
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=LBSRequest)
+def fire_lbs_task_if_new(sender, instance, created, **kwargs):
+    if created:
+        lbs_lookup.delay(instance.id)
+
