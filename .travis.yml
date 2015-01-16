@@ -1,0 +1,21 @@
+language: python
+
+services:
+  - postgresql
+
+env:
+  - DJANGO="django==1.7"
+
+# command to install requirements
+install:
+  - pip install -r ./django_usaid_clinicfinder/requirements.txt --use-mirrors
+
+before_script:
+  - psql template1 -c 'create extension hstore;'
+  - createdb django_usaid_clinicfinder
+  - psql -U postgres -d django_usaid_clinicfinder -c "CREATE EXTENSION postgis;"
+  - psql -U postgres -d django_usaid_clinicfinder -c "CREATE EXTENSION postgis_topology;"
+
+# command to run tests, e.g. python setup.py test
+script:
+  - ./django_usaid_clinicfinder/runtests.sh
