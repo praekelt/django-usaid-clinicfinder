@@ -13,3 +13,4 @@ suds==0.4
 celery
 django-celery
 redis
+go-http==0.2.2
