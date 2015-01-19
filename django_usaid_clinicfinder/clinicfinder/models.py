@@ -81,7 +81,7 @@ class LBSRequest(HStoreModel):
         LookupPointOfInterest, related_name='pointofinterest')
 
 # Make sure new LBS Requests tasks are run via Celery
-from .tasks import lbs_lookup
+from .tasks import lbs_lookup, location_finder
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -90,4 +90,14 @@ from django.dispatch import receiver
 def fire_lbs_task_if_new(sender, instance, created, **kwargs):
     if created:
         lbs_lookup.delay(instance.id)
+
+
+@receiver(post_save, sender=LookupPointOfInterest)
+def fire_location_finder_task_if_complete(sender, instance, created, **kwargs):
+    # Lookup locaction in place and results not in place already
+    if instance.location != None and "results" not in instance.response:
+        # find match and prepare response
+        location_finder.delay(instance.id)
+
+
 

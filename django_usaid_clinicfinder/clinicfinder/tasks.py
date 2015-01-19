@@ -5,11 +5,13 @@ from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from suds.client import Client
 from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import Distance
 
 from django.conf import settings
 
 from clinicfinder.models import (LBSRequest, LookupPointOfInterest,
-                                LookupLocation)
+                                 LookupLocation, PointOfInterest,
+                                 Location)
 
 logger = get_task_logger(__name__)
 
@@ -43,8 +45,8 @@ class LBS_Lookup(Task):
             lbsrequest = LBSRequest.objects.get(pk=lbsrequest_id)
             client = self.lbs_api_client()
             whitelist = client.service.AddAllowedMsisdn(
-                username=settings.LBS_API_USERNAME, 
-                password=settings.LBS_API_PASSWORD, 
+                username=settings.LBS_API_USERNAME,
+                password=settings.LBS_API_PASSWORD,
                 msisdn=lbsrequest.search["msisdn"], permissionType=2)
             if whitelist[0][0]["_code"] != "101":
                 response = whitelist[0][0]["_message"]
@@ -56,8 +58,8 @@ class LBS_Lookup(Task):
             else:
                 # Do a lookup now we have whitelisted
                 result = client.service.GetLocation(
-                    username=settings.LBS_API_USERNAME, 
-                    password=settings.LBS_API_PASSWORD, 
+                    username=settings.LBS_API_USERNAME,
+                    password=settings.LBS_API_PASSWORD,
                     msisdn=lbsrequest.search["msisdn"])
                 if result[0][0]["_code"] != "101":
                     l.info("Failed to return location")
@@ -93,3 +95,51 @@ class LBS_Lookup(Task):
                 exc_info=True)
 
 lbs_lookup = LBS_Lookup()
+
+
+class Location_Finder(Task):
+
+    """
+    Task to take location and search for results
+    """
+    name = "clinicfinder.tasks.location_finder"
+
+    class FailedEventRequest(Exception):
+
+        """
+        The attempted task failed because of a non-200 HTTP return
+        code.
+        """
+
+    def run(self, lookuppointofinterest_id, **kwargs):
+        """
+        Returns a filtered list of locations for query
+        """
+        l = self.get_logger(**kwargs)
+
+        l.info("Processing new location search")
+        response = "No response"
+        try:
+            lookuppoi = LookupPointOfInterest.objects.get(
+                pk=lookuppointofinterest_id)
+            distance = Distance(km=10)
+            locations = Location.objects.filter(
+                point__distance_lte=(lookuppoi.location.point, distance))
+            matches = PointOfInterest.objects.filter(
+                data__contains=lookuppoi.search).filter(location=locations)
+            output = ""
+            for match in matches:
+                output += "%s (%s)\n" % (
+                    match.data["Clinic Name"], match.data["Street Address"])
+            lookuppoi.response["results"] = output
+            lookuppoi.save()
+            l.info("Results: %s" % output)
+            l.info("Locations found, sending results")
+            return response
+        except SoftTimeLimitExceeded:
+            logger.error(
+                'Soft time limit exceed processing location search \
+                 via Celery.',
+                exc_info=True)
+
+location_finder = Location_Finder()
