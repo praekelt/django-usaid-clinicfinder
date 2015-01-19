@@ -55,7 +55,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         poi_data = {
             "search": search,
             "response": {
-                "method": "SMS",
+                "type": "SMS",
                 "to_addr": "+27123",
                 "template": "Your nearest x is result"
             },
@@ -146,7 +146,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
                 "hiv": "false"
             },
             "response": {
-                "method": "SMS",
+                "type": "SMS",
                 "to_addr": "+27123",
                 "template": "Your nearest x is result"
             },
