@@ -9,7 +9,8 @@ from rest_framework.authtoken.models import Token
 
 
 from .models import (Location, PointOfInterest,
-                     LookupLocation, LookupPointOfInterest)
+                     LookupLocation, LookupPointOfInterest,
+                     LBSRequest)
 
 
 class APITestCase(TestCase):
@@ -47,6 +48,21 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         }
         response = self.client.post('/clinicfinder/' + endpoint + '/',
                                     json.dumps(post_data),
+                                    content_type='application/json')
+        return response.data
+
+    def create_poi_lookup(self, endpoint, search):
+        poi_data = {
+            "search": search,
+            "response": {
+                "method": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is result"
+            },
+            "location": None
+        }
+        response = self.client.post('/clinicfinder/' + endpoint + '/',
+                                    json.dumps(poi_data),
                                     content_type='application/json')
         return response.data
 
@@ -146,3 +162,22 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.search["hiv"], "false")
         point = Point(18.0000000, -33.0000000)
         self.assertEqual(d.location.point, point)
+
+    def test_create_lbsrequest_model_data(self):
+        # poi_lookup = self.create_poi_lookup('requestlookup', {"mmc": "true"})
+        # print poi_lookup
+        post_data = {
+            "search": {
+                "msisdn": "27123"
+            },
+            "pointofinterest": self.create_poi_lookup('requestlookup', {"mmc": "true"})
+        }
+        response = self.client.post('/clinicfinder/lbsrequest/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        # print response
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LBSRequest.objects.last()
+        self.assertEqual(d.pointofinterest.search["mmc"], "true")
+        self.assertEqual(d.search["msisdn"], "27123")

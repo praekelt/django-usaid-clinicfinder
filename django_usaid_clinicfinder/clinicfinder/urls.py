@@ -7,6 +7,7 @@ router.register(r'pointofinterest', views.PointofInterestViewSet)
 router.register(r'location', views.LocationViewSet)
 router.register(r'requestlookup', views.LookupPointofInterestViewSet)
 router.register(r'requestlocation', views.LookupLocationViewSet)
+router.register(r'lbsrequest', views.LBSRequestViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browseable API.
