@@ -6,6 +6,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 from suds.client import Client
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
+from go_http.send import HttpApiSender
 
 from django.conf import settings
 
@@ -97,6 +98,57 @@ class LBS_Lookup(Task):
 lbs_lookup = LBS_Lookup()
 
 
+class Location_Sender(Task):
+
+    """
+    Task to take results and send them off. SMS only for now.
+    """
+    name = "clinicfinder.tasks.location_sender"
+
+    class FailedEventRequest(Exception):
+
+        """
+        The attempted task failed because of a non-200 HTTP return
+        code.
+        """
+
+    def run(self, lookuppointofinterest_id, **kwargs):
+        """
+        Returns a filtered list of locations for query
+        """
+        l = self.get_logger(**kwargs)
+
+        l.info("Processing new location result sending")
+        try:
+            lookuppoi = LookupPointOfInterest.objects.get(
+                pk=lookuppointofinterest_id)
+            response = lookuppoi.response
+            if response["type"] == "SMS" and "sent" not in response:
+                # send via Vumi
+                sender = HttpApiSender(
+                    account_key=settings.VUMI_GO_ACCOUNT_KEY,
+                    conversation_key=settings.VUMI_GO_CONVERSATION_KEY,
+                    conversation_token=settings.VUMI_GO_ACCOUNT_TOKEN
+                )
+                content = response["template"].replace(
+                    "{{ results }}", response["results"])
+                vumiresponse = sender.send_text(response["to_addr"], content)
+                lookuppoi.response["sent"] = "true"
+                lookuppoi.save()
+                l.info("Sent message to <%s>" % response["to_addr"])
+                return vumiresponse
+            else:
+                l.info("No message sent for lookuppointofinterest <%s>" %
+                       str(lookuppointofinterest_id))
+        except SoftTimeLimitExceeded:
+            logger.error(
+                'Soft time limit exceed processing location search \
+                 via Celery.',
+                exc_info=True)
+
+location_sender = Location_Sender()
+
+
 class Location_Finder(Task):
 
     """
@@ -118,7 +170,6 @@ class Location_Finder(Task):
         l = self.get_logger(**kwargs)
 
         l.info("Processing new location search")
-        response = "No response"
         try:
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
@@ -135,7 +186,8 @@ class Location_Finder(Task):
             lookuppoi.save()
             l.info("Results: %s" % output)
             l.info("Locations found, sending results")
-            return response
+            location_sender.delay(lookuppointofinterest_id)
+            return True
         except SoftTimeLimitExceeded:
             logger.error(
                 'Soft time limit exceed processing location search \
