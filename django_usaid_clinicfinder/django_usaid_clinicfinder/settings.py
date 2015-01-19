@@ -155,6 +155,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
+VUMI_GO_ACCOUNT_KEY = "" 
+VUMI_GO_CONVERSATION_KEY = "" 
+VUMI_GO_ACCOUNT_TOKEN = "" 
+
 
 try:
     from local_settings import *
