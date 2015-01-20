@@ -1,6 +1,9 @@
 from django.db import models as djangomodels
 from django.contrib.gis.db import models as gismodels
 from django_hstore import hstore
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .tasks import lbs_lookup, location_finder
 
 
 class HStoreModel(djangomodels.Model):
@@ -80,12 +83,8 @@ class LBSRequest(HStoreModel):
     pointofinterest = djangomodels.ForeignKey(
         LookupPointOfInterest, related_name='pointofinterest')
 
+
 # Make sure new LBS Requests tasks are run via Celery
-from .tasks import lbs_lookup, location_finder
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-
 @receiver(post_save, sender=LBSRequest)
 def fire_lbs_task_if_new(sender, instance, created, **kwargs):
     if created:
@@ -98,6 +97,3 @@ def fire_location_finder_task_if_complete(sender, instance, created, **kwargs):
     if instance.location != None and "results" not in instance.response:
         # find match and prepare response
         location_finder.delay(instance.id)
-
-
-
