@@ -55,4 +55,4 @@ class LBSRequestSerializer(HyperlinkedModelSerializer):
     class Meta:
         model = LBSRequest
         fields = ('url', 'search', 'response',
-                  'pointofinterest', 'created_at', 'updated_at')
+                  'pointofinterest')
