@@ -39,6 +39,7 @@ class LBS_Lookup(Task):
         Gets user details, adds to whitelist and gets current location
         """
         l = self.get_logger(**kwargs)
+        LBS_API_SUCCESS = 101
 
         l.info("Processing new LBS lookup")
         response = "No response"
@@ -49,11 +50,13 @@ class LBS_Lookup(Task):
                 username=settings.LBS_API_USERNAME,
                 password=settings.LBS_API_PASSWORD,
                 msisdn=lbsrequest.search["msisdn"], permissionType=2)
-            if whitelist[0][0]["_code"] != "101":
+            if whitelist[0][0]["_code"] != LBS_API_SUCCESS:
                 response = whitelist[0][0]["_message"]
                 l.info("Failed to Add MSISDN to allowed list")
                 lbsrequest.response = {
-                    "whitelist_message": whitelist[0][0]["_message"]
+                    "whitelist_code": whitelist[0][0]["_code"],
+                    "whitelist_message": whitelist[0][0]["_message"],
+                    "success": "false"
                 }
                 lbsrequest.save()
             else:
@@ -62,10 +65,12 @@ class LBS_Lookup(Task):
                     username=settings.LBS_API_USERNAME,
                     password=settings.LBS_API_PASSWORD,
                     msisdn=lbsrequest.search["msisdn"])
-                if result[0][0]["_code"] != "101":
+                if result[0][0]["_code"] != LBS_API_SUCCESS:
                     l.info("Failed to return location")
                     lbsrequest.response = {
-                        "lookup_message": result[0][0]["_message"]
+                        "lookup_code": result[0][0]["_code"],
+                        "lookup_message": result[0][0]["_message"],
+                        "success": "false"
                     }
                     lbsrequest.save()
                     response = result[0][0]["_message"]
