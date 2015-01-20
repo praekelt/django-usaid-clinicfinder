@@ -43,8 +43,9 @@ class LBS_Lookup(Task):
 
         l.info("Processing new LBS lookup")
         response = "No response"
+        lbsrequest = LBSRequest.objects.get(pk=lbsrequest_id)
+        lbsrequest.response = {}
         try:
-            lbsrequest = LBSRequest.objects.get(pk=lbsrequest_id)
             client = self.lbs_api_client()
             whitelist = client.service.AddAllowedMsisdn(
                 username=settings.LBS_API_USERNAME,
@@ -53,12 +54,11 @@ class LBS_Lookup(Task):
             if whitelist[0][0]["_code"] != LBS_API_SUCCESS:
                 response = whitelist[0][0]["_message"]
                 l.info("Failed to Add MSISDN to allowed list")
-                lbsrequest.response = {
-                    "whitelist_code": whitelist[0][0]["_code"],
-                    "whitelist_message": whitelist[0][0]["_message"],
-                    "success": "false"
-                }
-                lbsrequest.save()
+                lbsrequest.response[
+                    "whitelist_code"] = whitelist[0][0]["_code"]
+                lbsrequest.response["whitelist_message"] = whitelist[
+                    0][0]["_message"]
+                lbsrequest.response["success"] = "false"
             else:
                 # Do a lookup now we have whitelisted
                 result = client.service.GetLocation(
@@ -67,21 +67,17 @@ class LBS_Lookup(Task):
                     msisdn=lbsrequest.search["msisdn"])
                 if result[0][0]["_code"] != LBS_API_SUCCESS:
                     l.info("Failed to return location")
-                    lbsrequest.response = {
-                        "lookup_code": result[0][0]["_code"],
-                        "lookup_message": result[0][0]["_message"],
-                        "success": "false"
-                    }
-                    lbsrequest.save()
+                    lbsrequest.response["lookup_code"] = result[0][0]["_code"]
+                    lbsrequest.response["lookup_message"] = result[
+                        0][0]["_message"]
+                    lbsrequest.response["success"] = "false"
                     response = result[0][0]["_message"]
                 else:
                     l.info("Location found, creating lookup")
-                    lbsrequest.response = {
-                        "x": result[0][0]["x"],
-                        "y": result[0][0]["y"],
-                        "lookup_message": result[0][0]["_message"]
-                    }
-                    lbsrequest.save()
+                    lbsrequest.response["x"] = result[0][0]["x"]
+                    lbsrequest.response["y"] = result[0][0]["y"]
+                    lbsrequest.response["lookup_message"] = result[
+                        0][0]["_message"]
                     # Create location point
                     location = LookupLocation()
                     location.point = Point(
@@ -99,6 +95,8 @@ class LBS_Lookup(Task):
                 'Soft time limit exceed processing LBS lookup through \
                 SOAP API via Celery.',
                 exc_info=True)
+        finally:
+            lbsrequest.save()
 
 lbs_lookup = LBS_Lookup()
 
