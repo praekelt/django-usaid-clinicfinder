@@ -3,8 +3,6 @@ from django.contrib.gis.db import models as gismodels
 from django_hstore import hstore
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .tasks import lbs_lookup, location_finder
-
 
 class HStoreModel(djangomodels.Model):
     objects = hstore.HStoreManager()
@@ -83,6 +81,9 @@ class LBSRequest(HStoreModel):
     pointofinterest = djangomodels.ForeignKey(
         LookupPointOfInterest, related_name='pointofinterest')
 
+
+# Tasks import models from this file so must go here
+from .tasks import lbs_lookup, location_finder
 
 # Make sure new LBS Requests tasks are run via Celery
 @receiver(post_save, sender=LBSRequest)
