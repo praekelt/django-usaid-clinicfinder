@@ -135,10 +135,17 @@ class Location_Sender(Task):
                 )
                 content = response["template"].replace(
                     "{{ results }}", response["results"])
-                vumiresponse = sender.send_text(response["to_addr"], content)
-                lookuppoi.response["sent"] = "true"
+                if len(content) <= settings.LOCATION_RESPONSE_MAX_LENGTH:
+                    # Defaults to 320
+                    vumiresponse = sender.send_text(
+                        response["to_addr"], content)
+                    lookuppoi.response["sent"] = "true"
+                    l.info("Sent message to <%s>" % response["to_addr"])
+                else:
+                    l.info("Message not sent to <%s>. Too long at <%s> chars." %
+                           (response["to_addr"], str(len(content))))
                 lookuppoi.save()
-                l.info("Sent message to <%s>" % response["to_addr"])
+
                 return vumiresponse
             else:
                 l.info("No message sent for lookuppointofinterest <%s>" %
