@@ -1,4 +1,5 @@
 import json
+import mock
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
@@ -6,11 +7,14 @@ from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
+from go_http.send import LoggingSender
 
 
 from .models import (Location, PointOfInterest,
                      LookupLocation, LookupPointOfInterest,
                      LBSRequest)
+
+from .tasks import Location_Sender, LBS_Lookup
 
 
 class APITestCase(TestCase):
@@ -61,10 +65,32 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             },
             "location": None
         }
-        response = self.client.post('/clinicfinder/' + endpoint + '/',
-                                    json.dumps(poi_data),
-                                    content_type='application/json')
-        return response.data
+        return poi_data
+
+
+    def stub_add_allowed_msisdn(self, msisdn):
+        response = {
+            "_code": 101,
+            "_message": "Success Allowed Message"
+        }
+        return response
+
+    def stub_get_location_get_result(self, msisdn):
+        response = {
+            "_code": 101,
+            "_message": "Success Get Location Message",
+            "x": 17.9145812988280005,
+            "y": -32.7461242675779979
+        }
+        return response
+
+
+    def stub_get_location_no_result(self, msisdn):
+        response = {
+            "_code": 201,
+            "_message": "The username or password is invalid",
+        }
+        return response
 
 
     def test_login(self):
@@ -140,6 +166,10 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.point, point)
 
     def test_create_lookuppointofinterest_model_data(self):
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        # LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
+        # LBS_Lookup.get_location = self.stub_get_location
+
         post_data = {
             "search": {
                 "mmc": "true",
@@ -164,8 +194,10 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.location.point, point)
 
     def test_create_lbsrequest_model_data(self):
-        # poi_lookup = self.create_poi_lookup('requestlookup', {"mmc": "true"})
-        # print poi_lookup
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
+        LBS_Lookup.get_location = self.stub_get_location_get_result
+
         post_data = {
             "search": {
                 "msisdn": "27123"
@@ -175,9 +207,42 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         response = self.client.post('/clinicfinder/lbsrequest/',
                                     json.dumps(post_data),
                                     content_type='application/json')
-        # print response
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        d = LBSRequest.objects.last()
-        self.assertEqual(d.pointofinterest.search["mmc"], "true")
-        self.assertEqual(d.search["msisdn"], "27123")
+        lbs = LBSRequest.objects.last()
+        # Search for MMC saved
+        self.assertEqual(lbs.pointofinterest.search["mmc"], "true")
+        self.assertEqual(lbs.search["msisdn"], "27123")
+        # LBS Call worked
+        self.assertEqual(lbs.response["lookup_code"], "101")
+        # LBS Call Result created new point
+        lpoi = LookupPointOfInterest.objects.last()
+        point = Point(17.9145812988280005, -32.7461242675779979)
+        self.assertEqual(lpoi.location.point, point)
+
+    def test_create_lbsrequest_model_data_no_result(self):
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
+        LBS_Lookup.get_location = self.stub_get_location_no_result
+
+        post_data = {
+            "search": {
+                "msisdn": "27123"
+            },
+            "pointofinterest": self.create_poi_lookup('requestlookup', {"mmc": "true"})
+        }
+        response = self.client.post('/clinicfinder/lbsrequest/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        lbs = LBSRequest.objects.last()
+        # Search for MMC saved
+        self.assertEqual(lbs.pointofinterest.search["mmc"], "true")
+        self.assertEqual(lbs.search["msisdn"], "27123")
+        # LBS Call denied
+        self.assertEqual(lbs.response["lookup_code"], "201")
+        # LBS Call Result did not create new point
+        lpoi = LookupPointOfInterest.objects.last()
+        self.assertEqual(lpoi.location, None)
+
