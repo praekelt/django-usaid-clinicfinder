@@ -39,21 +39,19 @@ class AuthenticatedAPITestCase(APITestCase):
 
 class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
-    def create_location(self, endpoint, x, y):
+    fixtures = ["test_data.json"]
+
+    def create_location(self, x, y):
         point_data = {
-            "type": "Point",
-            "coordinates": [
-                x,
-                y
-            ]
+                "point": {
+                "type": "Point",
+                "coordinates": [
+                    x,
+                    y
+                ]
+            }
         }
-        post_data = {
-            "point": point_data
-        }
-        response = self.client.post('/clinicfinder/' + endpoint + '/',
-                                    json.dumps(post_data),
-                                    content_type='application/json')
-        return response.data
+        return point_data
 
     def create_poi_lookup(self, endpoint, search):
         poi_data = {
@@ -61,7 +59,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             "response": {
                 "type": "SMS",
                 "to_addr": "+27123",
-                "template": "Your nearest x is result"
+                "template": "Your nearest x is: {{ results }}"
             },
             "location": None
         }
@@ -131,7 +129,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
                 "mmc": "true",
                 "hiv": "false"
             },
-            "location": self.create_location('location', 18.0000000, -33.0000000)
+            "location": self.create_location(18.0000000, -33.0000000)
         }
         response = self.client.post('/clinicfinder/pointofinterest/',
                                     json.dumps(post_data),
@@ -167,8 +165,6 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lookuppointofinterest_model_data(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        # LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
-        # LBS_Lookup.get_location = self.stub_get_location
 
         post_data = {
             "search": {
@@ -178,9 +174,9 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             "response": {
                 "type": "SMS",
                 "to_addr": "+27123",
-                "template": "Your nearest x is result"
+                "template": "Your nearest x is: {{ results }}"
             },
-            "location": self.create_location('requestlocation', 18.0000000, -33.0000000)
+            "location": self.create_location(18.0000000, -33.0000000)
         }
         response = self.client.post('/clinicfinder/requestlookup/',
                                     json.dumps(post_data),
@@ -219,6 +215,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         lpoi = LookupPointOfInterest.objects.last()
         point = Point(17.9145812988280005, -32.7461242675779979)
         self.assertEqual(lpoi.location.point, point)
+        self.assertEqual(lpoi.response["results"], "Seapoint Clinic (Seapoint)\n")
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
@@ -246,3 +243,32 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         lpoi = LookupPointOfInterest.objects.last()
         self.assertEqual(lpoi.location, None)
 
+    def test_create_lookuppointofinterest_model_data_no_result(self):
+        # no valid clinic
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "mmc": "true",
+                "hiv": "false"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(29.0000000, -33.0000000)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.search["mmc"], "true")
+        self.assertEqual(d.search["hiv"], "false")
+        point = Point(29.0000000, -33.0000000)
+        self.assertEqual(d.location.point, point)
+        self.assertEqual(d.response["results"], "")
+
+        

@@ -203,6 +203,7 @@ class Location_Finder(Task):
             distance = Distance(km=10)
             locations = Location.objects.filter(
                 point__distance_lte=(lookuppoi.location.point, distance))
+
             matches = PointOfInterest.objects.filter(
                 data__contains=lookuppoi.search).filter(location=locations)
             output = ""

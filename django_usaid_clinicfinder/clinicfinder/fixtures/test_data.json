@@ -21,7 +21,8 @@
     "fields": {
         "created_at": "2015-01-14T13:01:11.426Z",
         "data": {
-            "suburb": "Seapoint",
+            "Clinic Name": "Seapoint Clinic",
+            "Street Address": "Seapoint",
             "hiv": "false",
             "mmc": "true"
         },
@@ -35,7 +36,8 @@
     "fields": {
         "created_at": "2015-01-14T13:01:46.743Z",
         "data": {
-            "suburb": "Soweto",
+            "Clinic Name": "Soweto Clinic",
+            "Street Address": "Soweto",
             "hiv": "true",
             "mmc": "false"
         },
@@ -62,50 +64,5 @@
     },
     "model": "clinicfinder.lookuplocation",
     "pk": 2
-},
-{
-    "fields": {
-        "search": {
-            "mmc": "true"
-        },
-        "created_at": "2015-01-14T13:08:13.230Z",
-        "location": 1,
-        "updated_at": "2015-01-14T13:27:02.987Z",
-        "response": {
-            "response_type": "SMS"
-        }
-    },
-    "model": "clinicfinder.lookuppointofinterest",
-    "pk": 1
-},
-{
-    "fields": {
-        "search": {
-            "feature": "hiv"
-        },
-        "created_at": "2015-01-14T13:09:10.986Z",
-        "location": 2,
-        "updated_at": "2015-01-14T13:09:10.986Z",
-        "response": {
-            "response_type": "SMS"
-        }
-    },
-    "model": "clinicfinder.lookuppointofinterest",
-    "pk": 2
-},
-{
-    "fields": {
-        "search": {
-            "hiv": "true"
-        },
-        "created_at": "2015-01-14T13:27:18.320Z",
-        "location": 1,
-        "updated_at": "2015-01-14T13:27:18.320Z",
-        "response": {
-            "response_type": "SMS"
-        }
-    },
-    "model": "clinicfinder.lookuppointofinterest",
-    "pk": 3
 }
 ]
