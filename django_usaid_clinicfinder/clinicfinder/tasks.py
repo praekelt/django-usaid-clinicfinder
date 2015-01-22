@@ -23,7 +23,7 @@ class LBS_Lookup(Task):
     Task to request location from LBS API
     """
     name = "clinicfinder.tasks.lbs_lookup"
-    LBS_API_SUCCESS = 101
+    LBS_API_SUCCESS = "101"
 
     class FailedEventRequest(Exception):
 
@@ -57,7 +57,7 @@ class LBS_Lookup(Task):
             "_code": result[0][0]["_code"],
             "_message": result[0][0]["_message"]
         }
-        if result[0][0]["_code"] == self.LBS_API_SUCCESS:
+        if response["_code"] == self.LBS_API_SUCCESS:
             response["x"] = result[0][0]["x"]
             response["y"] = result[0][0]["y"]
         return response

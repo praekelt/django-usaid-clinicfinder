@@ -68,14 +68,14 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def stub_add_allowed_msisdn(self, msisdn):
         response = {
-            "_code": 101,
+            "_code": "101",
             "_message": "Success Allowed Message"
         }
         return response
 
     def stub_get_location_get_result(self, msisdn):
         response = {
-            "_code": 101,
+            "_code": "101",
             "_message": "Success Get Location Message",
             "x": 17.9145812988280005,
             "y": -32.7461242675779979
@@ -85,7 +85,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def stub_get_location_no_result(self, msisdn):
         response = {
-            "_code": 201,
+            "_code": "201",
             "_message": "The username or password is invalid",
         }
         return response
