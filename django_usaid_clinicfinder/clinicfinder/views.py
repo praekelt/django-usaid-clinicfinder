@@ -1,10 +1,10 @@
 from .models import (PointOfInterest, Location, LookupLocation,
-                     LookupPointOfInterest)
+                     LookupPointOfInterest, LBSRequest)
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (PointOfInterestSerializer, LocationSerializer,
                           LookupPointOfInterestSerializer,
-                          LookupLocationSerializer)
+                          LookupLocationSerializer, LBSRequestSerializer)
 
 
 class LocationViewSet(viewsets.ModelViewSet):
@@ -45,3 +45,13 @@ class LookupPointofInterestViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = LookupPointOfInterest.objects.all()
     serializer_class = LookupPointOfInterestSerializer
+
+
+class LBSRequestViewSet(viewsets.ModelViewSet):
+
+    """
+    API endpoint that allows LBS Request models to be viewed or edited.
+    """
+    permission_classes = (IsAuthenticated,)
+    queryset = LBSRequest.objects.all()
+    serializer_class = LBSRequestSerializer

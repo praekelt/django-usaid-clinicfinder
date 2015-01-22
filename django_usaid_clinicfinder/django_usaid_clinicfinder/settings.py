@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.gis',
     # 3rd party
+    'djcelery',
     'raven.contrib.django.raven_compat',
     'rest_framework',
     'rest_framework.authtoken',
@@ -127,6 +128,39 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',)
 }
+
+# Celery configuration options
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+
+BROKER_URL = 'redis://localhost:6379/0'
+
+from kombu import Exchange, Queue
+
+CELERY_DEFAULT_QUEUE = 'django_usaid_clinicfinder'
+CELERY_QUEUES = (
+    Queue('django_usaid_clinicfinder',
+    Exchange('django_usaid_clinicfinder'),
+    routing_key='django_usaid_clinicfinder'),
+)
+
+CELERY_ALWAYS_EAGER = False
+
+# Tell Celery where to find the tasks
+CELERY_IMPORTS = (
+    'clinicfinder.tasks'
+)
+
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+
+VUMI_GO_ACCOUNT_KEY = "" 
+VUMI_GO_CONVERSATION_KEY = "" 
+VUMI_GO_ACCOUNT_TOKEN = "" 
+LOCATION_RESPONSE_MAX_LENGTH = 320
+
+
 try:
     from local_settings import *
 except ImportError:

@@ -1,5 +1,6 @@
 from .models import (Location, PointOfInterest,
-                     LookupLocation, LookupPointOfInterest)
+                     LookupLocation, LookupPointOfInterest,
+                     LBSRequest)
 from rest_framework.serializers import HyperlinkedModelSerializer
 from rest_framework_gis.serializers import GeoModelSerializer
 
@@ -22,7 +23,7 @@ class PointOfInterestSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = PointOfInterest
-        fields = ('url', 'id', 'data', 'location', 'created_at', 'updated_at')
+        fields = ('url', 'id', 'data', 'location')
 
 
 class LookupLocationSerializer(GeoModelSerializer):
@@ -43,5 +44,15 @@ class LookupPointOfInterestSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = LookupPointOfInterest
-        fields = ('url', 'search', 'response', 'location', 'created_at', 'updated_at')
+        fields = (
+            'url', 'search', 'response', 'location')
 
+
+class LBSRequestSerializer(HyperlinkedModelSerializer):
+    pointofinterest = LookupPointOfInterestSerializer(
+        many=False, read_only=False)
+
+    class Meta:
+        model = LBSRequest
+        fields = ('url', 'search', 'response',
+                  'pointofinterest')

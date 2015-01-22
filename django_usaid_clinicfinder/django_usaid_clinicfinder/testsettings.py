@@ -18,3 +18,6 @@ CELERY_ALWAYS_EAGER = True
 BROKER_BACKEND = 'memory'
 CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 
+LBS_API_WSDL = "https://lbs.gsm.co.za/lbsservice.asmx?WSDL"
+LBS_API_USERNAME = ""
+LBS_API_PASSWORD = ""
