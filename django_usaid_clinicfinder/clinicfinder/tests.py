@@ -1,6 +1,6 @@
 import json
-import mock
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -14,7 +14,7 @@ from .models import (Location, PointOfInterest,
                      LookupLocation, LookupPointOfInterest,
                      LBSRequest)
 
-from .tasks import Location_Sender, LBS_Lookup
+from .tasks import Location_Sender, LBS_Lookup, PointOfInterest_Importer
 
 
 class APITestCase(TestCase):
@@ -43,11 +43,11 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def create_location(self, x, y):
         point_data = {
-                "point": {
+            "point": {
                 "type": "Point",
                 "coordinates": [
-                    x,
-                    y
+                        x,
+                        y
                 ]
             }
         }
@@ -65,7 +65,6 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         }
         return poi_data
 
-
     def stub_add_allowed_msisdn(self, msisdn):
         response = {
             "_code": "101",
@@ -82,14 +81,12 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         }
         return response
 
-
     def stub_get_location_no_result(self, msisdn):
         response = {
             "_code": "201",
             "_message": "The username or password is invalid",
         }
         return response
-
 
     def test_login(self):
         request = self.client.post(
@@ -198,7 +195,8 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             "search": {
                 "msisdn": "27123"
             },
-            "pointofinterest": self.create_poi_lookup('requestlookup', {"mmc": "true"})
+            "pointofinterest":
+                self.create_poi_lookup('requestlookup', {"mmc": "true"})
         }
         response = self.client.post('/clinicfinder/lbsrequest/',
                                     json.dumps(post_data),
@@ -215,7 +213,8 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         lpoi = LookupPointOfInterest.objects.last()
         point = Point(17.9145812988280005, -32.7461242675779979)
         self.assertEqual(lpoi.location.point, point)
-        self.assertEqual(lpoi.response["results"], "Seapoint Clinic (Seapoint)\n")
+        self.assertEqual(
+            lpoi.response["results"], "Seapoint Clinic (Seapoint)\n")
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
@@ -226,7 +225,8 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             "search": {
                 "msisdn": "27123"
             },
-            "pointofinterest": self.create_poi_lookup('requestlookup', {"mmc": "true"})
+            "pointofinterest":
+                self.create_poi_lookup('requestlookup', {"mmc": "true"})
         }
         response = self.client.post('/clinicfinder/lbsrequest/',
                                     json.dumps(post_data),
@@ -271,4 +271,84 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.location.point, point)
         self.assertEqual(d.response["results"], "")
 
-        
+class TestUploadPoiCSV(TestCase):
+
+    CSV_LINE_CLEAN_1 = {'Area 1': 'Pixley ka Seme',
+                         'Area 2': '',
+                         'Area 3': '',
+                         'Clinic Name': 'All Services Clinic',
+                         'HCT': 'true',
+                         'ID': '5632',
+                         'Latitude': '-29.66818',
+                         'Longitude': '22.73732',
+                         'MMC': 'true',
+                         'Primary Contact Number': '533532037',
+                         'Province': 'Northern Cape',
+                         'Street Address': ''}
+    CSV_LINE_CLEAN_2 = {'Area 1': 'Pixley ka Seme',
+                         'Area 2': '',
+                         'Area 3': '',
+                         'Clinic Name': 'HCT Clinic',
+                         'HCT': 'true',
+                         'ID': '5633',
+                         'Latitude': '-29.66648',
+                         'Longitude': '22.73116',
+                         'MMC': 'false',
+                         'Primary Contact Number': '',
+                         'Province': 'Northern Cape',
+                         'Street Address': ''}
+    CSV_LINE_DUP_LOC = {'Area 1': 'Pixley ka Seme',
+                         'Area 2': '',
+                         'Area 3': '',
+                         'Clinic Name': 'MMC Clinic',
+                         'HCT': 'false',
+                         'ID': '5631',
+                         'Latitude': '-29.66648',
+                         'Longitude': '22.73116',
+                         'MMC': 'true',
+                         'Primary Contact Number': '538022222',
+                         'Province': 'Northern Cape',
+                         'Street Address': ''}
+
+    @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS = True,
+                       CELERY_ALWAYS_EAGER = True,
+                       BROKER_BACKEND = 'memory',)
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            'test', 'test@example.com', "pass123")
+
+    def test_upload_view_not_logged_in_blocked(self):
+        response = self.client.get(reverse("locations_uploader"))
+        # redirect
+        self.assertEqual(response.status_code, 302)
+
+    def test_upload_view_logged_in(self):
+        self.client.login(username="test", password="pass123")
+
+        response = self.client.get(reverse("locations_uploader"))
+        self.assertIn("Upload Locations CSV", response.content)
+
+    def test_upload_csv(self):
+        clean_sample = list()
+        clean_sample.append(self.CSV_LINE_CLEAN_1)
+        clean_sample.append(self.CSV_LINE_CLEAN_2)
+        results = PointOfInterest_Importer.delay(clean_sample)
+        self.assertEqual(results.get(), 2)
+        new_locations = Location.objects.all().count()
+        self.assertEquals(new_locations, 2)
+        new_pois = PointOfInterest.objects.all().count()
+        self.assertEquals(new_pois, 2)
+
+
+    def test_upload_csv_dupe_locations(self):
+        dupe_sample = list()
+        dupe_sample.append(self.CSV_LINE_CLEAN_1)
+        dupe_sample.append(self.CSV_LINE_CLEAN_2)
+        dupe_sample.append(self.CSV_LINE_DUP_LOC)
+        results = PointOfInterest_Importer.delay(dupe_sample)
+        self.assertEqual(results.get(), 3)
+        new_locations = Location.objects.all().count()
+        self.assertEquals(new_locations, 2)
+        new_pois = PointOfInterest.objects.all().count()
+        self.assertEquals(new_pois, 3)
+
