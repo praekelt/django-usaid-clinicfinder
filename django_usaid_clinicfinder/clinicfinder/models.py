@@ -35,6 +35,13 @@ class PointOfInterest(HStoreModel):
     data = hstore.DictionaryField()
     location = djangomodels.ForeignKey(Location, related_name='location')
 
+    def __unicode__(self):
+        # This will only work while the data is well structured
+        if "Clinic Name" in self.data:
+            return "%s at %s, %s" % (self.data["Clinic Name"], self.location.point.x, self.location.point.y)
+        else:
+            return "Point of Interest at %s, %s" % (self.location.point.x, self.location.point.y)
+
 
 class LookupLocation(gismodels.Model):
 
@@ -68,6 +75,15 @@ class LookupPointOfInterest(HStoreModel):
         LookupLocation, related_name='lookup_location',
         blank=True, null=True)
 
+    def __unicode__(self):
+        # This will only work while the data is well structured
+        if "to_addr" in self.response and self.location is not None:
+            return "%s at %s, %s" % (self.response["to_addr"], self.location.point.x, self.location.point.y)
+        elif self.location is not None:
+            return "Lookup at %s, %s" % (self.location.point.x, self.location.point.y)
+        else:
+            return "Lookup timed at %s" % (self.created_at)
+
 
 class LBSRequest(HStoreModel):
 
@@ -80,6 +96,13 @@ class LBSRequest(HStoreModel):
     response = hstore.DictionaryField(blank=True, null=True)
     pointofinterest = djangomodels.ForeignKey(
         LookupPointOfInterest, related_name='pointofinterest')
+
+    def __unicode__(self):
+        # This will only work while the data is well structured
+        if "msisdn" in self.search:
+            return "Request from %s" % (self.search["msisdn"])
+        else:
+            return "Request created at %s" % (self.created_at)
 
 
 # Tasks import models from this file so must go here
