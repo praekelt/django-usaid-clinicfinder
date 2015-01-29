@@ -249,29 +249,34 @@ class PointOfInterest_Importer(Task):
 
         l.info("Processing new point of interest import data")
         imported = 0
+        row = 0
         try:
             for line in poidata:
+                row +=1
                 if "Latitude" in line and "Longitude" in line:
-                    poi_point = Point(float(line["Longitude"]), float(line["Latitude"]))
-                    # check if point exists
-                    locations = Location.objects.filter(point=poi_point)
-                    if locations.count() == 0:
-                        # make a Location
-                        location = Location()
-                        location.point = poi_point
-                        location.save()
+                    if line["Longitude"] != "" and line["Latitude"] != "":
+                        poi_point = Point(float(line["Longitude"]), float(line["Latitude"]))
+                        # check if point exists
+                        locations = Location.objects.filter(point=poi_point)
+                        if locations.count() == 0:
+                            # make a Location
+                            location = Location()
+                            location.point = poi_point
+                            location.save()
+                        else:
+                            # Grab the top of the stack
+                            location = locations[0]
+                        # Create new point of interest with location
+                        poi = PointOfInterest()
+                        poi.location = location
+                        poi.data = line
+                        poi.save()
+                        imported += 1
+                        l.info("Imported: %s" % line["Clinic Name"])
                     else:
-                        # Grab the top of the stack
-                        location = locations[0]
-                    # Create new point of interest with location
-                    poi = PointOfInterest()
-                    poi.location = location
-                    poi.data = line
-                    poi.save()
-                    imported += 1
-                    l.info("Imported: %s" % line["Clinic Name"])
+                        l.info("Row <%s> has corrupted point data, not imported" % row)
                 else:
-                    l.info("Row missing point data, not imported")
+                    l.info("Row <%s> missing point data, not imported" % row)
             l.info("Imported <%s> locations" % str(imported))
             return imported
         except SoftTimeLimitExceeded:

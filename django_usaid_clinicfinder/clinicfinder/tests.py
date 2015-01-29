@@ -310,6 +310,19 @@ class TestUploadPoiCSV(TestCase):
                          'Province': 'Northern Cape',
                          'Street Address': ''}
 
+    CSV_LINE_NO_LAT = {'Area 1': 'Pixley ka Seme',
+                         'Area 2': '',
+                         'Area 3': '',
+                         'Clinic Name': 'MMC Clinic',
+                         'HCT': 'false',
+                         'ID': '5631',
+                         'Latitude': '',
+                         'Longitude': '22.73116',
+                         'MMC': 'true',
+                         'Primary Contact Number': '538022222',
+                         'Province': 'Northern Cape',
+                         'Street Address': ''}
+
     @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS = True,
                        CELERY_ALWAYS_EAGER = True,
                        BROKER_BACKEND = 'memory',)
@@ -339,7 +352,6 @@ class TestUploadPoiCSV(TestCase):
         new_pois = PointOfInterest.objects.all().count()
         self.assertEquals(new_pois, 2)
 
-
     def test_upload_csv_dupe_locations(self):
         dupe_sample = list()
         dupe_sample.append(self.CSV_LINE_CLEAN_1)
@@ -351,4 +363,15 @@ class TestUploadPoiCSV(TestCase):
         self.assertEquals(new_locations, 2)
         new_pois = PointOfInterest.objects.all().count()
         self.assertEquals(new_pois, 3)
+
+    def test_upload_csv_no_lat(self):
+        bad_sample = list()
+        bad_sample.append(self.CSV_LINE_CLEAN_1)
+        bad_sample.append(self.CSV_LINE_NO_LAT)
+        results = PointOfInterest_Importer.delay(bad_sample)
+        self.assertEqual(results.get(), 1)
+        new_locations = Location.objects.all().count()
+        self.assertEquals(new_locations, 1)
+        new_pois = PointOfInterest.objects.all().count()
+        self.assertEquals(new_pois, 1)
 
