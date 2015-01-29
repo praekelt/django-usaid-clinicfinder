@@ -153,6 +153,7 @@ class Location_Sender(Task):
                 sender = self.vumi_client()
                 content = response["template"].replace(
                     "{{ results }}", response["results"])
+                vumiresponse = False
                 if len(content) <= settings.LOCATION_RESPONSE_MAX_LENGTH:
                     # Defaults to 320
                     vumiresponse = sender.send_text(
