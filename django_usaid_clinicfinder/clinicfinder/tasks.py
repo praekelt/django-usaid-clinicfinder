@@ -207,10 +207,11 @@ class Location_Finder(Task):
                 point__distance_lte=(lookuppoi.location.point, distance))
 
             matches = PointOfInterest.objects.filter(
-                data__contains=lookuppoi.search).filter(location=locations)
+                        data__contains=lookuppoi.search).filter(
+                        location=locations).order_by('location')[:2]
             output = ""
             for match in matches:
-                output += "%s (%s)\n" % (
+                output += "\n%s (%s)" % (
                     match.data["Clinic Name"], match.data["Street Address"])
             lookuppoi.response["results"] = output
             lookuppoi.save()
