@@ -255,7 +255,8 @@ class PointOfInterest_Importer(Task):
                 row +=1
                 if "Latitude" in line and "Longitude" in line:
                     if line["Longitude"] != "" and line["Latitude"] != "":
-                        poi_point = Point(float(line["Longitude"]), float(line["Latitude"]))
+                        poi_point = Point(float(line["Longitude"]), 
+                                          float(line["Latitude"]))
                         # check if point exists
                         locations = Location.objects.filter(point=poi_point)
                         if locations.count() == 0:
