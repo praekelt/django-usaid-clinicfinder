@@ -1,0 +1,414 @@
+[
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.197Z",
+        "updated_at": "2015-01-29T12:18:27.198Z",
+        "point": "POINT (18.8658299999999990 -34.0747199999999992)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5199
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.215Z",
+        "updated_at": "2015-01-29T12:18:27.215Z",
+        "point": "POINT (18.8222699999999996 -34.0595599999999976)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5200
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.223Z",
+        "updated_at": "2015-01-29T12:18:27.223Z",
+        "point": "POINT (18.71208 -33.85105)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5201
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.231Z",
+        "updated_at": "2015-01-29T12:18:27.231Z",
+        "point": "POINT (18.71208 -33.85105)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5202
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.250Z",
+        "updated_at": "2015-01-29T12:18:27.250Z",
+        "point": "POINT (18.71208 -33.85105)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5203
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.308Z",
+        "updated_at": "2015-01-29T12:18:27.308Z",
+        "point": "POINT (18.5514299999999999 -33.9680499999999981)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5204
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.342Z",
+        "updated_at": "2015-01-29T12:18:27.342Z",
+        "point": "POINT (28.3228240000000007 -28.2329270000000001)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5205
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.350Z",
+        "updated_at": "2015-01-29T12:18:27.350Z",
+        "point": "POINT (27.9616170000000004 -27.2888780000000004)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5206
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.359Z",
+        "updated_at": "2015-01-29T12:18:27.359Z",
+        "point": "POINT (27.4720699999999987 -26.8961700000000015)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5207
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.367Z",
+        "updated_at": "2015-01-29T12:18:27.367Z",
+        "point": "POINT (27.2382279999999994 -27.6534830000000014)"
+    },
+    "model": "clinicfinder.location",
+    "pk": 5208
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.206Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "218521334",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Helderberg Hospital",
+            "Latitude": "-34.07472",
+            "Longitude": "18.86583",
+            "ID": "5988",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.206Z",
+        "location": 5199
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11957
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.217Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Heldervue Pharmacy",
+            "Latitude": "-34.05956",
+            "Longitude": "18.82227",
+            "ID": "5989",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.217Z",
+        "location": 5200
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11958
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.225Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "0219806185/6205",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Harmonie Clinic",
+            "Latitude": "-33.85105",
+            "Longitude": "18.71209",
+            "ID": "5982",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.225Z",
+        "location": 5201
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11959
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.235Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "216969920",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Hazendal Satellite Clinic",
+            "Latitude": "-33.95718",
+            "Longitude": "18.50637",
+            "ID": "5983",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.235Z",
+        "location": 5202
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11960
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.262Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "216916648",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Hanover Park MOU",
+            "Latitude": "-33.99377",
+            "Longitude": "18.52724",
+            "ID": "5980",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.262Z",
+        "location": 5203
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11961
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.294Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Hanover Park Oral Health Service",
+            "Latitude": "-33.99377",
+            "Longitude": "18.52724",
+            "ID": "5981",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.294Z",
+        "location": 5203
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11962
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.313Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "216378033",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Heideveld MOU",
+            "Latitude": "-33.96805",
+            "Longitude": "18.55143",
+            "ID": "5986",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.313Z",
+        "location": 5204
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11963
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.319Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Heideveld Oral Health Service",
+            "Latitude": "-33.96805",
+            "Longitude": "18.55143",
+            "ID": "5987",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.319Z",
+        "location": 5204
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11964
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.329Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "0216378036/7/8",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Heideveld CDC",
+            "Latitude": "-33.96805",
+            "Longitude": "18.55143",
+            "ID": "5984",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.329Z",
+        "location": 5204
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11965
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.334Z",
+        "data": {
+            "Province": "Western Cape",
+            "hct": "true",
+            "Street Address": "",
+            "Primary Contact Number": "216378033",
+            "Area 1": "City of Cape Town",
+            "Area 3": "",
+            "Area 2": "",
+            "Clinic Name": "Heideveld Clinic",
+            "Latitude": "-33.96805",
+            "Longitude": "18.55143",
+            "ID": "5985",
+            "mmc": ""
+        },
+        "updated_at": "2015-01-29T12:18:27.334Z",
+        "location": 5204
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11966
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.345Z",
+        "data": {
+            "Province": "Free State",
+            "hct": "",
+            "Street Address": "2 Eeufees Street, Bethlehem",
+            "Primary Contact Number": "058 303 5331",
+            "Area 1": "Thabo Mofutsanyane",
+            "Area 3": "",
+            "Area 2": "Bethlehem",
+            "Clinic Name": "Dihlabeng Hospital",
+            "Latitude": "-28.232927",
+            "Longitude": "28.322824",
+            "ID": "270",
+            "mmc": "true"
+        },
+        "updated_at": "2015-01-29T12:18:27.345Z",
+        "location": 5205
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11967
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.352Z",
+        "data": {
+            "Province": "Free State",
+            "hct": "",
+            "Street Address": "Myron Street, Heilbron",
+            "Primary Contact Number": "058 813 1391",
+            "Area 1": "Fezile Dabi",
+            "Area 3": "",
+            "Area 2": "Heilbron",
+            "Clinic Name": "Tokollo Hospital",
+            "Latitude": "-27.288878",
+            "Longitude": "27.961617",
+            "ID": "271",
+            "mmc": "true"
+        },
+        "updated_at": "2015-01-29T12:18:27.352Z",
+        "location": 5206
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11968
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.361Z",
+        "data": {
+            "Province": "Free State",
+            "hct": "",
+            "Street Address": "8 Hospital Road, Parys",
+            "Primary Contact Number": "056 811 2155",
+            "Area 1": "Fezile Dabi",
+            "Area 3": "",
+            "Area 2": "Parys",
+            "Clinic Name": "Parys Hospital",
+            "Latitude": "-26.89617",
+            "Longitude": "27.47207",
+            "ID": "272",
+            "mmc": "true"
+        },
+        "updated_at": "2015-01-29T12:18:27.361Z",
+        "location": 5207
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11969
+},
+{
+    "fields": {
+        "created_at": "2015-01-29T12:18:27.368Z",
+        "data": {
+            "Province": "Free State",
+            "hct": "",
+            "Street Address": "Smaldeel road, Kroonstad",
+            "Primary Contact Number": "056 216 5200",
+            "Area 1": "Fezile Dabi",
+            "Area 3": "",
+            "Area 2": "Kroonstad",
+            "Clinic Name": "Boitumelo Hospital",
+            "Latitude": "-27.653483",
+            "Longitude": "27.238228",
+            "ID": "273",
+            "mmc": "true"
+        },
+        "updated_at": "2015-01-29T12:18:27.368Z",
+        "location": 5208
+    },
+    "model": "clinicfinder.pointofinterest",
+    "pk": 11970
+}
+]

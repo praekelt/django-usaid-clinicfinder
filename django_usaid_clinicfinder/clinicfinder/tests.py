@@ -39,7 +39,7 @@ class AuthenticatedAPITestCase(APITestCase):
 
 class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
-    fixtures = ["test_data.json"]
+    fixtures = ["test_data.json", "test_multi_data.json"]
 
     def create_location(self, x, y):
         point_data = {
@@ -214,7 +214,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         point = Point(17.9145812988280005, -32.7461242675779979)
         self.assertEqual(lpoi.location.point, point)
         self.assertEqual(
-            lpoi.response["results"], "Seapoint Clinic (Seapoint)\n")
+            lpoi.response["results"], "\nSeapoint Clinic (Seapoint)")
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
@@ -270,6 +270,29 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         point = Point(29.0000000, -33.0000000)
         self.assertEqual(d.location.point, point)
         self.assertEqual(d.response["results"], "")
+
+    def test_create_lookuppointofinterest_model_data_2_result(self):
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "hct": "true"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(18.71208, -33.85105)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"], "\nHarmonie Clinic ()\nHazendal Satellite Clinic ()")
 
 class TestUploadPoiCSV(TestCase):
 

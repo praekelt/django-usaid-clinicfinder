@@ -151,18 +151,25 @@ class Location_Sender(Task):
             if response["type"] == "SMS" and "sent" not in response:
                 # send via Vumi
                 sender = self.vumi_client()
-                content = response["template"].replace(
-                    "{{ results }}", response["results"])
-                if len(content) <= settings.LOCATION_RESPONSE_MAX_LENGTH:
-                    # Defaults to 320
-                    vumiresponse = sender.send_text(
-                        response["to_addr"], content)
-                    lookuppoi.response["sent"] = "true"
-                    l.info("Sent message to <%s>" % response["to_addr"])
+                if response["results"] != "":
+                    content = response["template"].replace(
+                        "{{ results }}", response["results"])
+                    vumiresponse = False
+                    if len(content) <= settings.LOCATION_RESPONSE_MAX_LENGTH:
+                        # Defaults to 320
+                        vumiresponse = sender.send_text(
+                            response["to_addr"], content)
+                        lookuppoi.response["sent"] = "true"
+                        l.info("Sent message to <%s>" % response["to_addr"])
+                    else:
+                        l.info(
+                            "Message not sent to <%s>. Too long at <%s> chars." %
+                            (response["to_addr"], str(len(content))))
                 else:
-                    l.info(
-                        "Message not sent to <%s>. Too long at <%s> chars." %
-                        (response["to_addr"], str(len(content))))
+                    vumiresponse = sender.send_text(
+                            response["to_addr"], settings.LOCATION_NONE_FOUND)
+                    lookuppoi.response["sent"] = "true"
+                    l.info("Sent no results message to <%s>" % response["to_addr"])
                 lookuppoi.save()
 
                 return vumiresponse
@@ -207,10 +214,11 @@ class Location_Finder(Task):
                 point__distance_lte=(lookuppoi.location.point, distance))
 
             matches = PointOfInterest.objects.filter(
-                data__contains=lookuppoi.search).filter(location=locations)
+                        data__contains=lookuppoi.search).filter(
+                        location=locations).order_by('location')[:2]
             output = ""
             for match in matches:
-                output += "%s (%s)\n" % (
+                output += "\n%s (%s)" % (
                     match.data["Clinic Name"], match.data["Street Address"])
             lookuppoi.response["results"] = output
             lookuppoi.save()

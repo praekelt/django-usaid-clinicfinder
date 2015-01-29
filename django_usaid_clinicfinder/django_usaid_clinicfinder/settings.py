@@ -159,6 +159,7 @@ VUMI_GO_ACCOUNT_KEY = ""
 VUMI_GO_CONVERSATION_KEY = "" 
 VUMI_GO_ACCOUNT_TOKEN = "" 
 LOCATION_RESPONSE_MAX_LENGTH = 320
+LOCATION_NONE_FOUND = "Sorry, no locations found. Please try again later."
 
 
 try:
