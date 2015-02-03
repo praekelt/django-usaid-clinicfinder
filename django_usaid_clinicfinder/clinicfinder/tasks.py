@@ -163,13 +163,14 @@ class Location_Sender(Task):
                         l.info("Sent message to <%s>" % response["to_addr"])
                     else:
                         l.info(
-                            "Message not sent to <%s>. Too long at <%s> chars." %
-                            (response["to_addr"], str(len(content))))
+                            "Message not sent to <%s>. Too long at <%s> chars."
+                            % (response["to_addr"], str(len(content))))
                 else:
                     vumiresponse = sender.send_text(
-                            response["to_addr"], settings.LOCATION_NONE_FOUND)
+                        response["to_addr"], settings.LOCATION_NONE_FOUND)
                     lookuppoi.response["sent"] = "true"
-                    l.info("Sent no results message to <%s>" % response["to_addr"])
+                    l.info("Sent no results message to <%s>" %
+                           response["to_addr"])
                 lookuppoi.save()
 
                 return vumiresponse
@@ -199,6 +200,14 @@ class Location_Finder(Task):
         code.
         """
 
+    def format_match(self, match):
+        primary = "Clinic Name"
+        additional = ["Street Address", "Primary Contact Number"]
+        add_output = ', '.join(
+            match.data[key] for key in additional
+            if key in match.data and match.data[key] != "")
+        return "%s (%s)" % (match.data[primary], add_output)
+
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -214,16 +223,17 @@ class Location_Finder(Task):
                 point__distance_lte=(lookuppoi.location.point, distance))
 
             matches = PointOfInterest.objects.filter(
-                        data__contains=lookuppoi.search).filter(
-                        location=locations).order_by('location')[:2]
-            output = ""
-            for match in matches:
-                output += "\n%s (%s)" % (
-                    match.data["Clinic Name"], match.data["Street Address"])
+                data__contains=lookuppoi.search).filter(
+                location=locations).order_by('location')[:2]
+            total = matches.count()
+            if total != 0:
+                output = ' AND '.join(self.format_match(match)
+                                      for match in matches)
+            else:
+                output = ""
             lookuppoi.response["results"] = output
             lookuppoi.save()
-            l.info("Results: %s" % output)
-            l.info("Locations found, sending results")
+            l.info("Completed location search. Found: %s" % str(total))
             location_sender.delay(lookuppointofinterest_id)
             return True
         except SoftTimeLimitExceeded:
@@ -260,10 +270,10 @@ class PointOfInterest_Importer(Task):
         row = 0
         try:
             for line in poidata:
-                row +=1
+                row += 1
                 if "Latitude" in line and "Longitude" in line:
                     if line["Longitude"] != "" and line["Latitude"] != "":
-                        poi_point = Point(float(line["Longitude"]), 
+                        poi_point = Point(float(line["Longitude"]),
                                           float(line["Latitude"]))
                         # check if point exists
                         locations = Location.objects.filter(point=poi_point)
@@ -283,7 +293,9 @@ class PointOfInterest_Importer(Task):
                         imported += 1
                         l.info("Imported: %s" % line["Clinic Name"])
                     else:
-                        l.info("Row <%s> has corrupted point data, not imported" % row)
+                        l.info(
+                            "Row <%s> has corrupted point data, "
+                            "not imported" % row)
                 else:
                     l.info("Row <%s> missing point data, not imported" % row)
             l.info("Imported <%s> locations" % str(imported))
