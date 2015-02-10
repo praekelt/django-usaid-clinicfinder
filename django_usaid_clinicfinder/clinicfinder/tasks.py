@@ -209,13 +209,14 @@ class Location_Finder(Task):
         try:
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
-            distance = Distance(km=10)
+            distance = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             locations = Location.objects.filter(
-                point__distance_lte=(lookuppoi.location.point, distance))
+                point__distance_lte=(lookuppoi.location.point, distance)).distance(
+                        lookuppoi.location.point).order_by('point')
 
             matches = PointOfInterest.objects.filter(
                         data__contains=lookuppoi.search).filter(
-                        location=locations).order_by('location')[:2]
+                        location=locations)[:settings.LOCATION_MAX_RESPONSES]
             output = ""
             for match in matches:
                 output += "\n%s (%s)" % (
