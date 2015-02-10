@@ -140,8 +140,8 @@ from kombu import Exchange, Queue
 CELERY_DEFAULT_QUEUE = 'django_usaid_clinicfinder'
 CELERY_QUEUES = (
     Queue('django_usaid_clinicfinder',
-    Exchange('django_usaid_clinicfinder'),
-    routing_key='django_usaid_clinicfinder'),
+          Exchange('django_usaid_clinicfinder'),
+          routing_key='django_usaid_clinicfinder'),
 )
 
 CELERY_ALWAYS_EAGER = False
@@ -155,13 +155,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 
-VUMI_GO_ACCOUNT_KEY = "" 
-VUMI_GO_CONVERSATION_KEY = "" 
-VUMI_GO_ACCOUNT_TOKEN = "" 
+VUMI_GO_ACCOUNT_KEY = ""
+VUMI_GO_CONVERSATION_KEY = ""
+VUMI_GO_ACCOUNT_TOKEN = ""
 LOCATION_RESPONSE_MAX_LENGTH = 320
 LOCATION_NONE_FOUND = "Sorry, no locations found. Please try again later."
 LOCATION_MAX_RESPONSES = 2
-LOCATION_SEARCH_RADIUS = 10 #KM
+LOCATION_SEARCH_RADIUS = 10  # KM
 
 
 try:

@@ -292,63 +292,66 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.response["results"], "\nHarmonie Clinic ()\nHazendal Satellite Clinic ()")
+        self.assertEqual(
+            d.response["results"], "\nHarmonie Clinic ()\nHazendal "
+            "Satellite Clinic ()")
+
 
 class TestUploadPoiCSV(TestCase):
 
     CSV_LINE_CLEAN_1 = {'Area 1': 'Pixley ka Seme',
-                         'Area 2': '',
-                         'Area 3': '',
-                         'Clinic Name': 'All Services Clinic',
-                         'HCT': 'true',
-                         'ID': '5632',
-                         'Latitude': '-29.66818',
-                         'Longitude': '22.73732',
-                         'MMC': 'true',
-                         'Primary Contact Number': '533532037',
-                         'Province': 'Northern Cape',
-                         'Street Address': ''}
+                        'Area 2': '',
+                        'Area 3': '',
+                        'Clinic Name': 'All Services Clinic',
+                        'HCT': 'true',
+                        'ID': '5632',
+                        'Latitude': '-29.66818',
+                        'Longitude': '22.73732',
+                        'MMC': 'true',
+                        'Primary Contact Number': '533532037',
+                        'Province': 'Northern Cape',
+                        'Street Address': ''}
     CSV_LINE_CLEAN_2 = {'Area 1': 'Pixley ka Seme',
-                         'Area 2': '',
-                         'Area 3': '',
-                         'Clinic Name': 'HCT Clinic',
-                         'HCT': 'true',
-                         'ID': '5633',
-                         'Latitude': '-29.66648',
-                         'Longitude': '22.73116',
-                         'MMC': 'false',
-                         'Primary Contact Number': '',
-                         'Province': 'Northern Cape',
-                         'Street Address': ''}
+                        'Area 2': '',
+                        'Area 3': '',
+                        'Clinic Name': 'HCT Clinic',
+                        'HCT': 'true',
+                        'ID': '5633',
+                        'Latitude': '-29.66648',
+                        'Longitude': '22.73116',
+                        'MMC': 'false',
+                        'Primary Contact Number': '',
+                        'Province': 'Northern Cape',
+                        'Street Address': ''}
     CSV_LINE_DUP_LOC = {'Area 1': 'Pixley ka Seme',
-                         'Area 2': '',
-                         'Area 3': '',
-                         'Clinic Name': 'MMC Clinic',
-                         'HCT': 'false',
-                         'ID': '5631',
-                         'Latitude': '-29.66648',
-                         'Longitude': '22.73116',
-                         'MMC': 'true',
-                         'Primary Contact Number': '538022222',
-                         'Province': 'Northern Cape',
-                         'Street Address': ''}
+                        'Area 2': '',
+                        'Area 3': '',
+                        'Clinic Name': 'MMC Clinic',
+                        'HCT': 'false',
+                        'ID': '5631',
+                        'Latitude': '-29.66648',
+                        'Longitude': '22.73116',
+                        'MMC': 'true',
+                        'Primary Contact Number': '538022222',
+                        'Province': 'Northern Cape',
+                        'Street Address': ''}
 
     CSV_LINE_NO_LAT = {'Area 1': 'Pixley ka Seme',
-                         'Area 2': '',
-                         'Area 3': '',
-                         'Clinic Name': 'MMC Clinic',
-                         'HCT': 'false',
-                         'ID': '5631',
-                         'Latitude': '',
-                         'Longitude': '22.73116',
-                         'MMC': 'true',
-                         'Primary Contact Number': '538022222',
-                         'Province': 'Northern Cape',
-                         'Street Address': ''}
+                       'Area 2': '',
+                       'Area 3': '',
+                       'Clinic Name': 'MMC Clinic',
+                       'HCT': 'false',
+                       'ID': '5631',
+                       'Latitude': '',
+                       'Longitude': '22.73116',
+                       'MMC': 'true',
+                       'Primary Contact Number': '538022222',
+                       'Province': 'Northern Cape',
+                       'Street Address': ''}
 
-    @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS = True,
-                       CELERY_ALWAYS_EAGER = True,
-                       BROKER_BACKEND = 'memory',)
+    @override_settings(CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+                       CELERY_ALWAYS_EAGER=True,
+                       BROKER_BACKEND='memory',)
     def setUp(self):
         self.admin = User.objects.create_superuser(
             'test', 'test@example.com', "pass123")
@@ -397,4 +400,3 @@ class TestUploadPoiCSV(TestCase):
         self.assertEquals(new_locations, 1)
         new_pois = PointOfInterest.objects.all().count()
         self.assertEquals(new_pois, 1)
-

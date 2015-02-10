@@ -163,13 +163,15 @@ class Location_Sender(Task):
                         l.info("Sent message to <%s>" % response["to_addr"])
                     else:
                         l.info(
-                            "Message not sent to <%s>. Too long at <%s> chars." %
+                            "Message not sent to <%s>. "
+                            "Too long at <%s> chars." %
                             (response["to_addr"], str(len(content))))
                 else:
                     vumiresponse = sender.send_text(
-                            response["to_addr"], settings.LOCATION_NONE_FOUND)
+                        response["to_addr"], settings.LOCATION_NONE_FOUND)
                     lookuppoi.response["sent"] = "true"
-                    l.info("Sent no results message to <%s>" % response["to_addr"])
+                    l.info("Sent no results message to <%s>" %
+                           response["to_addr"])
                 lookuppoi.save()
 
                 return vumiresponse
@@ -211,12 +213,13 @@ class Location_Finder(Task):
                 pk=lookuppointofinterest_id)
             distance = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             locations = Location.objects.filter(
-                point__distance_lte=(lookuppoi.location.point, distance)).distance(
+                point__distance_lte=(
+                    lookuppoi.location.point, distance)).distance(
                         lookuppoi.location.point).order_by('point')
 
             matches = PointOfInterest.objects.filter(
-                        data__contains=lookuppoi.search).filter(
-                        location=locations)[:settings.LOCATION_MAX_RESPONSES]
+                data__contains=lookuppoi.search).filter(
+                location=locations)[:settings.LOCATION_MAX_RESPONSES]
             output = ""
             for match in matches:
                 output += "\n%s (%s)" % (
@@ -261,10 +264,10 @@ class PointOfInterest_Importer(Task):
         row = 0
         try:
             for line in poidata:
-                row +=1
+                row += 1
                 if "Latitude" in line and "Longitude" in line:
                     if line["Longitude"] != "" and line["Latitude"] != "":
-                        poi_point = Point(float(line["Longitude"]), 
+                        poi_point = Point(float(line["Longitude"]),
                                           float(line["Latitude"]))
                         # check if point exists
                         locations = Location.objects.filter(point=poi_point)
@@ -284,7 +287,9 @@ class PointOfInterest_Importer(Task):
                         imported += 1
                         l.info("Imported: %s" % line["Clinic Name"])
                     else:
-                        l.info("Row <%s> has corrupted point data, not imported" % row)
+                        l.info(
+                            "Row <%s> has corrupted point data, "
+                            "not imported" % row)
                 else:
                     l.info("Row <%s> missing point data, not imported" % row)
             l.info("Imported <%s> locations" % str(imported))

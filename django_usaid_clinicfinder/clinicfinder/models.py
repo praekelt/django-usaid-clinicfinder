@@ -4,6 +4,7 @@ from django_hstore import hstore
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 class HStoreModel(djangomodels.Model):
     objects = hstore.HStoreManager()
 
@@ -38,9 +39,12 @@ class PointOfInterest(HStoreModel):
     def __unicode__(self):
         # This will only work while the data is well structured
         if "Clinic Name" in self.data:
-            return "%s at %s, %s" % (self.data["Clinic Name"], self.location.point.x, self.location.point.y)
+            return "%s at %s, %s" % (self.data["Clinic Name"],
+                                     self.location.point.x,
+                                     self.location.point.y)
         else:
-            return "Point of Interest at %s, %s" % (self.location.point.x, self.location.point.y)
+            return "Point of Interest at %s, %s" % \
+                (self.location.point.x, self.location.point.y)
 
 
 class LookupLocation(gismodels.Model):
@@ -78,9 +82,12 @@ class LookupPointOfInterest(HStoreModel):
     def __unicode__(self):
         # This will only work while the data is well structured
         if "to_addr" in self.response and self.location is not None:
-            return "%s at %s, %s" % (self.response["to_addr"], self.location.point.x, self.location.point.y)
+            return "%s at %s, %s" % (self.response["to_addr"],
+                                     self.location.point.x,
+                                     self.location.point.y)
         elif self.location is not None:
-            return "Lookup at %s, %s" % (self.location.point.x, self.location.point.y)
+            return "Lookup at %s, %s" % (self.location.point.x,
+                                         self.location.point.y)
         else:
             return "Lookup timed at %s" % (self.created_at)
 
@@ -109,6 +116,8 @@ class LBSRequest(HStoreModel):
 from .tasks import lbs_lookup, location_finder
 
 # Make sure new LBS Requests tasks are run via Celery
+
+
 @receiver(post_save, sender=LBSRequest)
 def fire_lbs_task_if_new(sender, instance, created, **kwargs):
     if created:
@@ -118,6 +127,6 @@ def fire_lbs_task_if_new(sender, instance, created, **kwargs):
 @receiver(post_save, sender=LookupPointOfInterest)
 def fire_location_finder_task_if_complete(sender, instance, created, **kwargs):
     # Lookup locaction in place and results not in place already
-    if instance.location != None and "results" not in instance.response:
+    if instance.location is not None and "results" not in instance.response:
         # find match and prepare response
         location_finder.delay(instance.id)
