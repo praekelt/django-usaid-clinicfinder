@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.contrib import messages
 from django.core.context_processors import csrf
 
+
 class LocationViewSet(viewsets.ModelViewSet):
 
     """
@@ -80,12 +81,13 @@ def locations_uploader(request, page_name):
             context = {"form": form}
         context.update(csrf(request))
 
-        return render_to_response("custom_admin/upload_locations.html", context,
+        return render_to_response("custom_admin/upload_locations.html",
+                                  context,
                                   context_instance=RequestContext(request))
     else:
         form = LocationsCSVUploader()
         context = {"form": form}
         context.update(csrf(request))
-        return render_to_response("custom_admin/upload_locations.html", context,
+        return render_to_response("custom_admin/upload_locations.html",
+                                  context,
                                   context_instance=RequestContext(request))
-
