@@ -214,7 +214,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         point = Point(17.9145812988280005, -32.7461242675779979)
         self.assertEqual(lpoi.location.point, point)
         self.assertEqual(
-            lpoi.response["results"], "\nSeapoint Clinic (Seapoint)")
+            lpoi.response["results"], "Seapoint Clinic (Seapoint)")
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
@@ -292,9 +292,9 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         d = LookupPointOfInterest.objects.last()
-        self.assertEqual(
-            d.response["results"], "\nHarmonie Clinic ()\nHazendal "
-            "Satellite Clinic ()")
+        self.assertEqual(d.response["results"],
+                         "Harmonie Clinic (0219806185/6205) "
+                         "AND Hazendal Satellite Clinic (216969920)")
 
 
 class TestUploadPoiCSV(TestCase):

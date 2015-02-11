@@ -201,6 +201,14 @@ class Location_Finder(Task):
         code.
         """
 
+    def format_match(self, match):
+        primary = "Clinic Name"
+        additional = ["Street Address", "Primary Contact Number"]
+        add_output = ', '.join(
+            match.data[key] for key in additional
+            if key in match.data and match.data[key] != "")
+        return "%s (%s)" % (match.data[primary], add_output)
+
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -220,14 +228,15 @@ class Location_Finder(Task):
             matches = PointOfInterest.objects.filter(
                 data__contains=lookuppoi.search).filter(
                 location=locations)[:settings.LOCATION_MAX_RESPONSES]
-            output = ""
-            for match in matches:
-                output += "\n%s (%s)" % (
-                    match.data["Clinic Name"], match.data["Street Address"])
+            total = matches.count()
+            if total != 0:
+                output = ' AND '.join(self.format_match(match)
+                                      for match in matches)
+            else:
+                output = ""
             lookuppoi.response["results"] = output
             lookuppoi.save()
-            l.info("Results: %s" % output)
-            l.info("Locations found, sending results")
+            l.info("Completed location search. Found: %s" % str(total))
             location_sender.delay(lookuppointofinterest_id)
             return True
         except SoftTimeLimitExceeded:
