@@ -400,3 +400,105 @@ class TestUploadPoiCSV(TestCase):
         self.assertEquals(new_locations, 1)
         new_pois = PointOfInterest.objects.all().count()
         self.assertEquals(new_pois, 1)
+
+
+class TestClinicFinderDistanceSorting(AuthenticatedAPITestCase):
+
+    fixtures = ["test_distance_data.json"]
+
+    def create_location(self, x, y):
+        point_data = {
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                        x,
+                        y
+                ]
+            }
+        }
+        return point_data
+
+    def create_poi_lookup(self, endpoint, search):
+        poi_data = {
+            "search": search,
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": None
+        }
+        return poi_data
+
+    def stub_add_allowed_msisdn(self, msisdn):
+        response = {
+            "_code": "101",
+            "_message": "Success Allowed Message"
+        }
+        return response
+
+    def stub_get_location_get_result(self, msisdn):
+        response = {
+            "_code": "101",
+            "_message": "Success Get Location Message",
+            "x": 17.9145812988280005,
+            "y": -32.7461242675779979
+        }
+        return response
+
+    def stub_get_location_no_result(self, msisdn):
+        response = {
+            "_code": "201",
+            "_message": "The username or password is invalid",
+        }
+        return response
+
+    def test_create_forward_result(self):
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "hct": "true"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(18.458404541015, -33.92578125)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"],
+                         "Clinic One (Tel One) "
+                         "AND Clinic Two (Tel Two)")
+
+    def test_create_reverse_result(self):
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "hct": "true"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(18.904724121094993, -33.92578125)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"],
+                         "Clinic Four (Tel Four) "
+                         "AND Clinic Three (Tel Three)")

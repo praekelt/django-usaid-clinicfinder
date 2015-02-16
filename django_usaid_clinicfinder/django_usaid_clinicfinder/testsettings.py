@@ -21,3 +21,6 @@ CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 LBS_API_WSDL = "https://lbs.gsm.co.za/lbsservice.asmx?WSDL"
 LBS_API_USERNAME = ""
 LBS_API_PASSWORD = ""
+
+LOCATION_SEARCH_RADIUS = 20  # KM
+LOCATION_MAX_RESPONSES = 2
