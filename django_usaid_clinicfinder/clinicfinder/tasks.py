@@ -217,21 +217,25 @@ class Location_Finder(Task):
 
         l.info("Processing new location search")
         try:
+
+            ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
-            distance = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             locations = Location.objects.filter(
                 point__distance_lte=(
-                    lookuppoi.location.point, distance)).distance(
-                        lookuppoi.location.point).order_by('point')
+                    lookuppoi.location.point, ringfence)).filter(
+                location__data__contains=lookuppoi.search).distance(
+                lookuppoi.location.point).order_by('distance')
+            matches = []
+            for result in locations:
+                for poi in result.location.all():
+                    matches.append(poi)
 
-            matches = PointOfInterest.objects.filter(
-                data__contains=lookuppoi.search).filter(
-                location=locations)[:settings.LOCATION_MAX_RESPONSES]
-            total = matches.count()
+            submission = matches[:settings.LOCATION_MAX_RESPONSES]
+            total = len(submission)
             if total != 0:
                 output = ' AND '.join(self.format_match(match)
-                                      for match in matches)
+                                      for match in submission)
             else:
                 output = ""
             lookuppoi.response["results"] = output
