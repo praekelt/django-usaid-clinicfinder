@@ -31,6 +31,8 @@ class LBS_Lookup(Task):
         The attempted task failed because of a non-200 HTTP return
         code.
         """
+    def normalize_msisdn(self, msisdn):
+        return msisdn.replace("+", "")
 
     def lbs_api_client(self):
         return Client(settings.LBS_API_WSDL)
@@ -40,7 +42,7 @@ class LBS_Lookup(Task):
         whitelist = client.service.AddAllowedMsisdn(
             username=settings.LBS_API_USERNAME,
             password=settings.LBS_API_PASSWORD,
-            msisdn=msisdn, permissionType=2)
+            msisdn=self.normalize_msisdn(msisdn), permissionType=2)
         response = {
             "_code": whitelist[0][0]["_code"],
             "_message": whitelist[0][0]["_message"]
@@ -52,7 +54,7 @@ class LBS_Lookup(Task):
         result = client.service.GetLocation(
             username=settings.LBS_API_USERNAME,
             password=settings.LBS_API_PASSWORD,
-            msisdn=msisdn)
+            msisdn=self.normalize_msisdn(msisdn))
         response = {
             "_code": result[0][0]["_code"],
             "_message": result[0][0]["_message"]
