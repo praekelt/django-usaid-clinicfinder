@@ -1,4 +1,5 @@
 import json
+import logging
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
@@ -7,15 +8,25 @@ from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
-from go_http.send import LoggingSender
-
+from go_http.send import LoggingSender, HttpApiSender
+from requests_testadapter import TestAdapter, TestSession
 
 from .models import (Location, PointOfInterest,
                      LookupLocation, LookupPointOfInterest,
                      LBSRequest)
 
-from .tasks import Location_Sender, LBS_Lookup, PointOfInterest_Importer
+from .tasks import (Location_Sender, LBS_Lookup,
+                    PointOfInterest_Importer, Metric_Sender, metric_sender)
 
+
+class RecordingAdapter(TestAdapter):
+    """ Record the request that was handled by the adapter.
+    """
+    request = None
+
+    def send(self, request, *args, **kw):
+        self.request = request
+        return super(RecordingAdapter, self).send(request, *args, **kw)
 
 class APITestCase(TestCase):
 
@@ -35,6 +46,12 @@ class AuthenticatedAPITestCase(APITestCase):
         token = Token.objects.create(user=self.user)
         self.token = token.key
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        self.session = TestSession()
+        self.sender = HttpApiSender(
+            account_key="acc-key", conversation_key="conv-key",
+            api_url="http://go.vumi.org/api/v1/go/http_api_nostream",
+            conversation_token="conv-token", session=self.session)
+
 
 
 class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
@@ -295,6 +312,43 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.response["results"],
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
+
+
+
+    def test_create_lookuppointofinterest_metric_fire(self):
+        # Fire metric after sending
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = LoggingSender('go_http.test')
+        result = metric_sender.delay(metric="sms.noresults", value=1, agg="sum")
+        self.assertTrue(result.successful())
+        self.assertEquals(result.get()["reason"],
+                          "Metrics published")
+        # Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        # self.sender = LoggingSender('go_http.test')
+        # self.handler = RecordingHandler()
+        # logger = logging.getLogger('go_http.test')
+        # logger.setLevel(logging.INFO)
+        # logger.addHandler(self.handler)
+
+        # post_data = {
+        #     "search": {
+        #         "hct": "true"
+        #     },
+        #     "response": {
+        #         "type": "SMS",
+        #         "to_addr": "+27123",
+        #         "template": "Your nearest x is: {{ results }}"
+        #     },
+        #     "location": self.create_location(18.71208, -33.85105)
+        # }
+        # response = self.client.post('/clinicfinder/requestlookup/',
+        #                             json.dumps(post_data),
+        #                             content_type='application/json')
+
+        # [log] = self.handler.logs
+        # self.assertEqual(log.msg, "Metric: 'subscription.duplicates' [last] -> 1")
+
+
 
 
 class TestUploadPoiCSV(TestCase):

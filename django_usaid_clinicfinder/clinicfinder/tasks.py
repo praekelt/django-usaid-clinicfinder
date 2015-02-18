@@ -16,6 +16,51 @@ from clinicfinder.models import (LBSRequest, LookupPointOfInterest,
 
 logger = get_task_logger(__name__)
 
+class Metric_Sender(Task):
+
+    """
+    Task to fire metrics at Vumi
+    """
+    name = "clinicfinder.tasks.metric_sender"
+
+    class FailedEventRequest(Exception):
+
+        """
+        The attempted task failed because of a non-200 HTTP return
+        code.
+        """
+
+    def vumi_client(self):
+        return HttpApiSender(
+            account_key=settings.VUMI_GO_ACCOUNT_KEY,
+            conversation_key=settings.VUMI_GO_CONVERSATION_KEY,
+            conversation_token=settings.VUMI_GO_ACCOUNT_TOKEN
+        )
+
+    def run(self, metric, value, agg, **kwargs):
+        """
+        Returns count of imported records
+        """
+        l = self.get_logger(**kwargs)
+
+        l.info("Firing metric: %r [%s] -> %g" % (metric, agg, float(value)))
+        try:
+            sender = self.vumi_client()
+            sender.fire_metric(metric, value, agg=agg)
+            # sender = {
+            #     "success": True,
+            #     "reason": "Metrics published",
+            # }
+            l.info("Result of firing metric: %s" % (sender["success"]))
+            return sender
+
+        except SoftTimeLimitExceeded:
+            logger.error(
+                'Soft time limit exceed processing metric fire \
+                 via Celery.',
+                exc_info=True)
+
+metric_sender = Metric_Sender()
 
 class LBS_Lookup(Task):
 
@@ -161,6 +206,9 @@ class Location_Sender(Task):
                             response["to_addr"], content)
                         lookuppoi.response["sent"] = "true"
                         l.info("Sent message to <%s>" % response["to_addr"])
+                        # metric_sender.delay(
+                        #     metric="sms.results",
+                        #     value=1, agg="sum")
                     else:
                         l.info(
                             "Message not sent to <%s>. "
@@ -172,6 +220,9 @@ class Location_Sender(Task):
                     lookuppoi.response["sent"] = "true"
                     l.info("Sent no results message to <%s>" %
                            response["to_addr"])
+                    # metric_sender.delay(
+                    #         metric="sms.noresults",
+                    #         value=1, agg="sum")
                 lookuppoi.save()
 
                 return vumiresponse
@@ -314,3 +365,4 @@ class PointOfInterest_Importer(Task):
                 exc_info=True)
 
 pointofinterest_importer = PointOfInterest_Importer()
+
