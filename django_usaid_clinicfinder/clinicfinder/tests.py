@@ -1,5 +1,4 @@
 import json
-import logging
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
@@ -8,8 +7,7 @@ from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
-from go_http.send import LoggingSender, HttpApiSender
-from requests_testadapter import TestAdapter, TestSession
+from go_http.send import LoggingSender
 
 from .models import (Location, PointOfInterest,
                      LookupLocation, LookupPointOfInterest,
@@ -17,17 +15,6 @@ from .models import (Location, PointOfInterest,
 
 from .tasks import (Location_Sender, LBS_Lookup,
                     PointOfInterest_Importer, Metric_Sender, metric_sender)
-
-
-class RecordingAdapter(TestAdapter):
-
-    """ Record the request that was handled by the adapter.
-    """
-    request = None
-
-    def send(self, request, *args, **kw):
-        self.request = request
-        return super(RecordingAdapter, self).send(request, *args, **kw)
 
 
 class APITestCase(TestCase):
@@ -48,11 +35,6 @@ class AuthenticatedAPITestCase(APITestCase):
         token = Token.objects.create(user=self.user)
         self.token = token.key
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
-        # self.session = TestSession()
-        # self.sender = HttpApiSender(
-        #     account_key="acc-key", conversation_key="conv-key",
-        #     api_url="http://go.vumi.org/api/v1/go/http_api_nostream",
-        #     conversation_token="conv-token", session=self.session)
 
 
 class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
