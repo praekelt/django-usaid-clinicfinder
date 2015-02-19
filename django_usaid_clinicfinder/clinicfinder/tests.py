@@ -88,14 +88,6 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         }
         return response
 
-    def check_request(self, request, method, data=None, headers=None):
-        self.assertEqual(request.method, method)
-        if data is not None:
-            self.assertEqual(json.loads(request.body), data)
-        if headers is not None:
-            for key, value in headers.items():
-                self.assertEqual(request.headers[key], value)
-
     def test_login(self):
         request = self.client.post(
             '/clinicfinder/api-token-auth/',
