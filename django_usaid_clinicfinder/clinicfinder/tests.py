@@ -9,12 +9,12 @@ from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 from go_http.send import LoggingSender
 
-
 from .models import (Location, PointOfInterest,
                      LookupLocation, LookupPointOfInterest,
                      LBSRequest)
 
-from .tasks import Location_Sender, LBS_Lookup, PointOfInterest_Importer
+from .tasks import (Location_Sender, LBS_Lookup,
+                    PointOfInterest_Importer, Metric_Sender, metric_sender)
 
 
 class APITestCase(TestCase):
@@ -162,6 +162,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lookuppointofinterest_model_data(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -188,6 +189,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lbsrequest_model_data(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
         LBS_Lookup.get_location = self.stub_get_location_get_result
 
@@ -218,6 +220,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
         LBS_Lookup.get_location = self.stub_get_location_no_result
 
@@ -246,6 +249,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
     def test_create_lookuppointofinterest_model_data_no_result(self):
         # no valid clinic
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -274,6 +278,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
     def test_create_lookuppointofinterest_model_data_2_result(self):
         # 4 valid clinics, shows two
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -295,6 +300,14 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.response["results"],
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
+
+    def test_fire_metric(self):
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        result = metric_sender.delay(
+            metric="sms.noresults", value=1, agg="sum")
+        self.assertTrue(result.successful())
+        self.assertEquals(result.get()["reason"],
+                          "Metrics published")
 
 
 class TestUploadPoiCSV(TestCase):
