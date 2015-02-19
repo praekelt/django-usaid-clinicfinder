@@ -36,6 +36,7 @@ class Metric_Sender(Task):
             conversation_key=settings.VUMI_GO_CONVERSATION_KEY,
             conversation_token=settings.VUMI_GO_ACCOUNT_TOKEN
         )
+        # return LoggingSender('go_http.test')
 
     def run(self, metric, value, agg, **kwargs):
         """
@@ -46,13 +47,9 @@ class Metric_Sender(Task):
         l.info("Firing metric: %r [%s] -> %g" % (metric, agg, float(value)))
         try:
             sender = self.vumi_client()
-            sender.fire_metric(metric, value, agg=agg)
-            # sender = {
-            #     "success": True,
-            #     "reason": "Metrics published",
-            # }
-            l.info("Result of firing metric: %s" % (sender["success"]))
-            return sender
+            result = sender.fire_metric(metric, value, agg=agg)
+            l.info("Result of firing metric: %s" % (result["success"]))
+            return result
 
         except SoftTimeLimitExceeded:
             logger.error(
@@ -206,9 +203,9 @@ class Location_Sender(Task):
                             response["to_addr"], content)
                         lookuppoi.response["sent"] = "true"
                         l.info("Sent message to <%s>" % response["to_addr"])
-                        # metric_sender.delay(
-                        #     metric="sms.results",
-                        #     value=1, agg="sum")
+                        metric_sender.delay(
+                            metric="sms.results",
+                            value=1, agg="sum")
                     else:
                         l.info(
                             "Message not sent to <%s>. "
@@ -220,9 +217,9 @@ class Location_Sender(Task):
                     lookuppoi.response["sent"] = "true"
                     l.info("Sent no results message to <%s>" %
                            response["to_addr"])
-                    # metric_sender.delay(
-                    #         metric="sms.noresults",
-                    #         value=1, agg="sum")
+                    metric_sender.delay(
+                            metric="sms.noresults",
+                            value=1, agg="sum")
                 lookuppoi.save()
 
                 return vumiresponse

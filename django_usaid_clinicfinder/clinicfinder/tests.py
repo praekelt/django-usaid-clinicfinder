@@ -20,6 +20,7 @@ from .tasks import (Location_Sender, LBS_Lookup,
 
 
 class RecordingAdapter(TestAdapter):
+
     """ Record the request that was handled by the adapter.
     """
     request = None
@@ -27,6 +28,7 @@ class RecordingAdapter(TestAdapter):
     def send(self, request, *args, **kw):
         self.request = request
         return super(RecordingAdapter, self).send(request, *args, **kw)
+
 
 class APITestCase(TestCase):
 
@@ -46,12 +48,11 @@ class AuthenticatedAPITestCase(APITestCase):
         token = Token.objects.create(user=self.user)
         self.token = token.key
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
-        self.session = TestSession()
-        self.sender = HttpApiSender(
-            account_key="acc-key", conversation_key="conv-key",
-            api_url="http://go.vumi.org/api/v1/go/http_api_nostream",
-            conversation_token="conv-token", session=self.session)
-
+        # self.session = TestSession()
+        # self.sender = HttpApiSender(
+        #     account_key="acc-key", conversation_key="conv-key",
+        #     api_url="http://go.vumi.org/api/v1/go/http_api_nostream",
+        #     conversation_token="conv-token", session=self.session)
 
 
 class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
@@ -104,6 +105,14 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             "_message": "The username or password is invalid",
         }
         return response
+
+    def check_request(self, request, method, data=None, headers=None):
+        self.assertEqual(request.method, method)
+        if data is not None:
+            self.assertEqual(json.loads(request.body), data)
+        if headers is not None:
+            for key, value in headers.items():
+                self.assertEqual(request.headers[key], value)
 
     def test_login(self):
         request = self.client.post(
@@ -179,6 +188,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lookuppointofinterest_model_data(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -205,6 +215,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lbsrequest_model_data(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
         LBS_Lookup.get_location = self.stub_get_location_get_result
 
@@ -235,6 +246,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     def test_create_lbsrequest_model_data_no_result(self):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         LBS_Lookup.add_allowed_msisdn = self.stub_add_allowed_msisdn
         LBS_Lookup.get_location = self.stub_get_location_no_result
 
@@ -263,6 +275,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
     def test_create_lookuppointofinterest_model_data_no_result(self):
         # no valid clinic
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -291,6 +304,7 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
     def test_create_lookuppointofinterest_model_data_2_result(self):
         # 4 valid clinics, shows two
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
             "search": {
@@ -313,42 +327,13 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
 
-
-
-    def test_create_lookuppointofinterest_metric_fire(self):
-        # Fire metric after sending
-        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        Metric_Sender.vumi_client = LoggingSender('go_http.test')
-        result = metric_sender.delay(metric="sms.noresults", value=1, agg="sum")
+    def test_fire_metric(self):
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        result = metric_sender.delay(
+            metric="sms.noresults", value=1, agg="sum")
         self.assertTrue(result.successful())
         self.assertEquals(result.get()["reason"],
                           "Metrics published")
-        # Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        # self.sender = LoggingSender('go_http.test')
-        # self.handler = RecordingHandler()
-        # logger = logging.getLogger('go_http.test')
-        # logger.setLevel(logging.INFO)
-        # logger.addHandler(self.handler)
-
-        # post_data = {
-        #     "search": {
-        #         "hct": "true"
-        #     },
-        #     "response": {
-        #         "type": "SMS",
-        #         "to_addr": "+27123",
-        #         "template": "Your nearest x is: {{ results }}"
-        #     },
-        #     "location": self.create_location(18.71208, -33.85105)
-        # }
-        # response = self.client.post('/clinicfinder/requestlookup/',
-        #                             json.dumps(post_data),
-        #                             content_type='application/json')
-
-        # [log] = self.handler.logs
-        # self.assertEqual(log.msg, "Metric: 'subscription.duplicates' [last] -> 1")
-
-
 
 
 class TestUploadPoiCSV(TestCase):
