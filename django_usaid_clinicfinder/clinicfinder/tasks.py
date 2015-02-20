@@ -207,7 +207,7 @@ class Location_Sender(Task):
                         l.info("Sent message to <%s>" % response["to_addr"])
                         metric_sender.delay(
                             metric="sms.results",
-                            value=1, agg="sum")
+                            value=1, agg="SUM")
                     else:
                         l.info(
                             "Message not sent to <%s>. "
@@ -221,7 +221,7 @@ class Location_Sender(Task):
                            response["to_addr"])
                     metric_sender.delay(
                             metric="sms.noresults",
-                            value=1, agg="sum")
+                            value=1, agg="SUM")
                 lookuppoi.save()
 
                 return vumiresponse
