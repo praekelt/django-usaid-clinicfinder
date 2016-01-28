@@ -358,8 +358,8 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
         d = LookupPointOfInterest.objects.last()
         self.assertEqual(d.response["results"],
-                         "Harmonie Clinic (0219806185/6205) "
-                         "AND Hazendal Satellite Clinic (216969920)")
+                         "A sample organsation name (This is the full address) "
+                         "AND Another sample organsation (Room AC0202, 2nd Floor, Block AC)")
 
     def test_fire_metric(self):
         Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
