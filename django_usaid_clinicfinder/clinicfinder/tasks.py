@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-
+import requests
 from celery.task import Task
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
@@ -259,6 +259,23 @@ class Location_Finder(Task):
             if key in match.data and match.data[key] != "")
         return "%s (%s)" % (match.data[primary], add_output)
 
+    def format_match_aat(self, match):
+        run_att = ({"clinics": {"OrganisationName": "Highway Hospice Association",
+                                "FullAddress": ["59 Locksley Drive",
+                                                "Sherwood", " Durban", 
+                                                "KwaZulu-Natal", "4091"],
+                                "Y": "-29.831989288330078",
+                                "X": "30.971157073974609",
+                                "Province": "KwaZulu-Natal",
+                                "Town": "Durban",
+                                "Suburb": "Sherwood",
+                                "Road": "Locksley Drive",
+                                "DistanceMeters": "13649.0"}
+
+            })
+        return "%s (%s)" % (match.data[run_att])
+
+
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -271,23 +288,31 @@ class Location_Finder(Task):
             ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
-            locations = Location.objects.filter(
-                point__distance_lte=(
-                    lookuppoi.location.point, ringfence)).filter(
-                location__data__contains=lookuppoi.search).distance(
-                lookuppoi.location.point).order_by('distance')
-            matches = []
-            for result in locations:
-                for poi in result.location.all():
-                    matches.append(poi)
 
-            submission = matches[:settings.LOCATION_MAX_RESPONSES]
-            total = len(submission)
-            if total != 0:
-                output = ' AND '.join(self.format_match(match)
+            if lookuppoi.search.get('source') == 'aat':
+                matches = self.run_att(lookuppoi)
+                submission = matches[:settings.LOCATION_MAX_RESPONSES]
+                output = ' AND '.join(self.format_match_aat(match)
                                       for match in submission)
             else:
-                output = ""
+                locations = Location.objects.filter(
+                    point__distance_lte=(
+                        lookuppoi.location.point, ringfence)).filter(
+                    location__data__contains=lookuppoi.search).distance(
+                    lookuppoi.location.point).order_by('distance')
+                matches = []
+                for result in locations:
+                    for poi in result.location.all():
+                        matches.append(poi)
+            
+                submission = matches[:settings.LOCATION_MAX_RESPONSES]
+                total = len(submission)
+                if total != 0:
+                    output = ' AND '.join(self.format_match(match)
+                                          for match in submission)
+                else:
+                    output = ""
+
             lookuppoi.response["results"] = output
             lookuppoi.save()
             l.info("Completed location search. Found: %s" % str(total))
@@ -298,6 +323,19 @@ class Location_Finder(Task):
                 'Soft time limit exceed processing location search \
                  via Celery.',
                 exc_info=True)
+
+    def run_att(self, lookuppoi):
+
+        x = lookuppoi.location.point.x
+        y = lookuppoi.location.point.y
+        url = (
+            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
+            "username=praekelt&password=14apklt131apiafr1c490&meters=50000&category=77"
+            "&x=%s&y=%s") % (x, y)
+        response = requests.get(url, verify=False)
+        matches = response.json()
+        return matches
+
 
 location_finder = Location_Finder()
 
