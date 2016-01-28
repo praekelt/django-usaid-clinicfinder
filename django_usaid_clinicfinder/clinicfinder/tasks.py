@@ -276,8 +276,13 @@ class Location_Finder(Task):
             if lookuppoi.search.get('source') == 'aat':
                 matches = self.run_att(lookuppoi)
                 submission = matches[:settings.LOCATION_MAX_RESPONSES]
-                output = ' AND '.join(self.format_match_aat(match)
-                                      for match in submission)
+                total = len(submission)
+                if total != 0:
+                    output = ' AND '.join(self.format_match_aat(match)
+                                          for match in submission)
+                else:
+                    output = ""
+
             else:
                 locations = Location.objects.filter(
                     point__distance_lte=(
