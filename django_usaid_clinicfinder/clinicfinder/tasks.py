@@ -16,6 +16,7 @@ from clinicfinder.models import (LBSRequest, LookupPointOfInterest,
 
 logger = get_task_logger(__name__)
 
+
 class Metric_Sender(Task):
 
     """
@@ -259,23 +260,6 @@ class Location_Finder(Task):
             if key in match.data and match.data[key] != "")
         return "%s (%s)" % (match.data[primary], add_output)
 
-    def format_match_aat(self, match):
-        run_att = ({"clinics": {"OrganisationName": "Highway Hospice Association",
-                                "FullAddress": ["59 Locksley Drive",
-                                                "Sherwood", " Durban", 
-                                                "KwaZulu-Natal", "4091"],
-                                "Y": "-29.831989288330078",
-                                "X": "30.971157073974609",
-                                "Province": "KwaZulu-Natal",
-                                "Town": "Durban",
-                                "Suburb": "Sherwood",
-                                "Road": "Locksley Drive",
-                                "DistanceMeters": "13649.0"}
-
-            })
-        return "%s (%s)" % (match.data[run_att])
-
-
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -304,7 +288,7 @@ class Location_Finder(Task):
                 for result in locations:
                     for poi in result.location.all():
                         matches.append(poi)
-            
+
                 submission = matches[:settings.LOCATION_MAX_RESPONSES]
                 total = len(submission)
                 if total != 0:
@@ -324,17 +308,20 @@ class Location_Finder(Task):
                  via Celery.',
                 exc_info=True)
 
-    def run_att(self, lookuppoi):
+    def format_match_aat(self, match):
+        return "%s (%s)" % (
+            match.get('OrganisationName'),
+            match.get('FullAddress'))
 
+    def run_att(self, lookuppoi):
         x = lookuppoi.location.point.x
         y = lookuppoi.location.point.y
         url = (
             "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
-            "username=praekelt&password=14apklt131apiafr1c490&meters=50000&category=77"
-            "&x=%s&y=%s") % (x, y)
+            "username=praekelt&password=14apklt131apiafr1c490&meters=50000"
+            "&category=77&x=%s&y=%s") % (x, y)
         response = requests.get(url, verify=False)
-        matches = response.json()
-        return matches
+        return response.json().get('clinics')
 
 
 location_finder = Location_Finder()
