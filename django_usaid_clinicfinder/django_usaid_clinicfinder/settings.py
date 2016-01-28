@@ -163,6 +163,10 @@ LOCATION_NONE_FOUND = "Sorry, no locations found. Please try again later."
 LOCATION_MAX_RESPONSES = 2
 LOCATION_SEARCH_RADIUS = 10  # KM
 
+AAT_API_URL = "https://api-info4africa.aat.co.za/api/lookup/GetLocations"
+AAT_USERNAME = ''
+AAT_PASSWORD = ''
+
 
 try:
     from local_settings import *

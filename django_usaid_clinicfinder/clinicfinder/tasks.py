@@ -319,12 +319,15 @@ class Location_Finder(Task):
             match.get('FullAddress'))
 
     def run_att(self, lookuppoi):
-        x = lookuppoi.location.point.x
-        y = lookuppoi.location.point.y
         url = (
-            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
-            "username=praekelt&password=14apklt131apiafr1c490&meters=50000"
-            "&category=77&x=%s&y=%s") % (x, y)
+            "%(url)s?username=%(username)s&password=%(password)s&meters=50000"
+            "&category=77&x=%(x)s&y=%(y)s") % {
+                'url': settings.AAT_API_URL,
+                'username': settings.AAT_USERNAME,
+                'password': settings.AAT_PASSWORD,
+                'x': lookuppoi.location.point.x,
+                'y': lookuppoi.location.point.y
+        }
         response = requests.get(url, verify=False)
         return response.json().get('clinics')
 
