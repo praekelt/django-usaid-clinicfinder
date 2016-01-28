@@ -1,6 +1,8 @@
 import json
+import responses
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -301,7 +303,38 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
 
+    @responses.activate
     def test_create_lookuppointofinterest_aat_result(self):
+        response_json = {
+            "clinics": [{
+                "OrganisationName": "A sample organsation name",
+                "FullAddress": "This is the full address",
+                "Y": -29.831989288330078,
+                "X": 30.971157073974609,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "Sherwood",
+                "Road": "Locksley Drive",
+                "DistanceMeters": 13649.0},
+                {
+                "OrganisationName": "Another sample organsation",
+                "FullAddress": "Room AC0202, 2nd Floor, Block AC",
+                "Y": -29.837795257568359,
+                "X": 30.988857269287109,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "",
+                "Road": "Ward Road",
+                "DistanceMeters": 15474.0
+            }],
+            "searchY": -29.7894726,
+            "searchX": 30.83844}
+
+        responses.add(
+            responses.GET, settings.AAT_API_URL,
+            body=json.dumps(response_json), status=200,
+            content_type='application/json')
+
         # 4 valid clinics, shows two
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
