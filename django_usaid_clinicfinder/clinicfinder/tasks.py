@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-
+import requests
 from celery.task import Task
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
@@ -15,6 +15,7 @@ from clinicfinder.models import (LBSRequest, LookupPointOfInterest,
                                  Location)
 
 logger = get_task_logger(__name__)
+
 
 class Metric_Sender(Task):
 
@@ -271,23 +272,36 @@ class Location_Finder(Task):
             ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
-            locations = Location.objects.filter(
-                point__distance_lte=(
-                    lookuppoi.location.point, ringfence)).filter(
-                location__data__contains=lookuppoi.search).distance(
-                lookuppoi.location.point).order_by('distance')
-            matches = []
-            for result in locations:
-                for poi in result.location.all():
-                    matches.append(poi)
 
-            submission = matches[:settings.LOCATION_MAX_RESPONSES]
-            total = len(submission)
-            if total != 0:
-                output = ' AND '.join(self.format_match(match)
-                                      for match in submission)
+            if lookuppoi.search.get('source') == 'aat':
+                matches = self.run_att(lookuppoi)
+                submission = matches[:settings.LOCATION_MAX_RESPONSES]
+                total = len(submission)
+                if total != 0:
+                    output = ' AND '.join(self.format_match_aat(match)
+                                          for match in submission)
+                else:
+                    output = ""
+
             else:
-                output = ""
+                locations = Location.objects.filter(
+                    point__distance_lte=(
+                        lookuppoi.location.point, ringfence)).filter(
+                    location__data__contains=lookuppoi.search).distance(
+                    lookuppoi.location.point).order_by('distance')
+                matches = []
+                for result in locations:
+                    for poi in result.location.all():
+                        matches.append(poi)
+
+                submission = matches[:settings.LOCATION_MAX_RESPONSES]
+                total = len(submission)
+                if total != 0:
+                    output = ' AND '.join(self.format_match(match)
+                                          for match in submission)
+                else:
+                    output = ""
+
             lookuppoi.response["results"] = output
             lookuppoi.save()
             l.info("Completed location search. Found: %s" % str(total))
@@ -298,6 +312,25 @@ class Location_Finder(Task):
                 'Soft time limit exceed processing location search \
                  via Celery.',
                 exc_info=True)
+
+    def format_match_aat(self, match):
+        return "%s (%s)" % (
+            match.get('OrganisationName'),
+            match.get('FullAddress'))
+
+    def run_att(self, lookuppoi):
+        url = (
+            "%(url)s?username=%(username)s&password=%(password)s&meters=50000"
+            "&category=77&x=%(x)s&y=%(y)s") % {
+                'url': settings.AAT_API_URL,
+                'username': settings.AAT_USERNAME,
+                'password': settings.AAT_PASSWORD,
+                'x': lookuppoi.location.point.x,
+                'y': lookuppoi.location.point.y
+        }
+        response = requests.get(url, verify=False)
+        return response.json().get('clinics')
+
 
 location_finder = Location_Finder()
 

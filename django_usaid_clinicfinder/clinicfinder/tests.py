@@ -1,6 +1,8 @@
 import json
+import responses
 from django.test import TestCase
 from django.test.utils import override_settings
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -300,6 +302,122 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(d.response["results"],
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
+
+    @responses.activate
+    def test_create_lookuppointofinterest_aat_result_hct(self):
+        response_json = {
+            "clinics": [{
+                "OrganisationName": "A sample organsation name",
+                "FullAddress": "This is the full address",
+                "Y": -29.831989288330078,
+                "X": 30.971157073974609,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "Sherwood",
+                "Road": "Locksley Drive",
+                "DistanceMeters": 13649.0},
+                {
+                "OrganisationName": "Another sample organsation",
+                "FullAddress": "Room AC0202, 2nd Floor, Block AC",
+                "Y": -29.837795257568359,
+                "X": 30.988857269287109,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "",
+                "Road": "Ward Road",
+                "DistanceMeters": 15474.0
+            }],
+            "searchY": -29.7894726,
+            "searchX": 30.83844}
+
+        responses.add(
+            responses.GET, settings.AAT_API_URL,
+            body=json.dumps(response_json), status=200,
+            content_type='application/json')
+
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "hct": "true",
+                "source": "aat"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(30.83844, -29.7894726)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"],
+                         "A sample organsation name (This is the full address) "
+                         "AND Another sample organsation (Room AC0202, 2nd Floor, Block AC)")
+
+    @responses.activate
+    def test_create_lookuppointofinterest_aat_result_mmc(self):
+        response_json = {
+            "clinics": [{
+                "OrganisationName": "Sample organsation name",
+                "FullAddress": "This is the full address",
+                "Y": -29.831989288330078,
+                "X": 30.971157073974609,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "Sherwood",
+                "Road": "Locksley Drive",
+                "DistanceMeters": 13649.0},
+                {
+                "OrganisationName": "Another sample organsation name",
+                "FullAddress": "Room AC0202, 2nd Floor, Block AC",
+                "Y": -29.837795257568359,
+                "X": 30.988857269287109,
+                "Province": "KwaZulu-Natal",
+                "Town": "Durban",
+                "Suburb": "",
+                "Road": "Ward Road",
+                "DistanceMeters": 15474.0
+            }],
+            "searchY": -29.7894726,
+            "searchX": 30.83844}
+
+        responses.add(
+            responses.GET, settings.AAT_API_URL,
+            body=json.dumps(response_json), status=200,
+            content_type='application/json')
+
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "mmc": "true",
+                "source": "aat"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(30.83844, -29.7894726)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"],
+                         "Sample organsation name (This is the full address) "
+                         "AND Another sample organsation name (Room AC0202, 2nd Floor, Block AC)")    
 
     def test_fire_metric(self):
         Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
