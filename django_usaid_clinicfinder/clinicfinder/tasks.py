@@ -274,7 +274,7 @@ class Location_Finder(Task):
                 pk=lookuppointofinterest_id)
 
             if lookuppoi.search.get('source') == 'aat':
-                matches = self.run_att(lookuppoi)
+                matches = self.search_aat(lookuppoi)
                 submission = matches[:settings.LOCATION_MAX_RESPONSES]
                 total = len(submission)
                 if total != 0:
@@ -318,7 +318,7 @@ class Location_Finder(Task):
             match.get('OrganisationName'),
             match.get('FullAddress'))
 
-    def run_att(self, lookuppoi):
+    def search_aat(self, lookuppoi):
         url = (
             "%(url)s?username=%(username)s&password=%(password)s&meters=50000"
             "&category=77&x=%(x)s&y=%(y)s") % {
