@@ -252,14 +252,6 @@ class Location_Finder(Task):
         code.
         """
 
-    def format_match(self, match):
-        primary = "Clinic Name"
-        additional = ["Street Address", "Primary Contact Number"]
-        add_output = ', '.join(
-            match.data[key] for key in additional
-            if key in match.data and match.data[key] != "")
-        return "%s (%s)" % (match.data[primary], add_output)
-
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -269,38 +261,20 @@ class Location_Finder(Task):
         l.info("Processing new location search")
         try:
 
-            ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
 
             if lookuppoi.search.get('source') == 'aat':
                 matches = self.search_aat(lookuppoi)
-                submission = matches[:settings.LOCATION_MAX_RESPONSES]
-                total = len(submission)
-                if total != 0:
-                    output = ' AND '.join(self.format_match_aat(match)
-                                          for match in submission)
-                else:
-                    output = ""
-
             else:
-                locations = Location.objects.filter(
-                    point__distance_lte=(
-                        lookuppoi.location.point, ringfence)).filter(
-                    location__data__contains=lookuppoi.search).distance(
-                    lookuppoi.location.point).order_by('distance')
-                matches = []
-                for result in locations:
-                    for poi in result.location.all():
-                        matches.append(poi)
+                matches = self.search_db(lookuppoi)
 
-                submission = matches[:settings.LOCATION_MAX_RESPONSES]
-                total = len(submission)
-                if total != 0:
-                    output = ' AND '.join(self.format_match(match)
-                                          for match in submission)
-                else:
-                    output = ""
+            matches = matches[:settings.LOCATION_MAX_RESPONSES]
+            total = len(matches)
+            if total != 0:
+                output = ' AND '.join(matches)
+            else:
+                output = ""
 
             lookuppoi.response["results"] = output
             lookuppoi.save()
@@ -321,15 +295,38 @@ class Location_Finder(Task):
     def search_aat(self, lookuppoi):
         url = (
             "%(url)s?username=%(username)s&password=%(password)s&meters=50000"
-            "&category=77&x=%(x)s&y=%(y)s") % {
+            "&category=%(category)s&x=%(x)s&y=%(y)s") % {
                 'url': settings.AAT_API_URL,
                 'username': settings.AAT_USERNAME,
                 'password': settings.AAT_PASSWORD,
+                'category': settings.AAT_CATEGORIES,
                 'x': lookuppoi.location.point.x,
                 'y': lookuppoi.location.point.y
         }
         response = requests.get(url, verify=False)
-        return response.json().get('clinics')
+        matches = response.json().get('clinics')
+        return [self.format_match_aat(match) for match in matches]
+
+    def format_match_db(self, match):
+        primary = "Clinic Name"
+        additional = ["Street Address", "Primary Contact Number"]
+        add_output = ', '.join(
+            match.data[key] for key in additional
+            if key in match.data and match.data[key] != "")
+        return "%s (%s)" % (match.data[primary], add_output)
+
+    def search_db(self, lookuppoi):
+        ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
+        locations = Location.objects.filter(
+            point__distance_lte=(
+                lookuppoi.location.point, ringfence)).filter(
+            location__data__contains=lookuppoi.search).distance(
+            lookuppoi.location.point).order_by('distance')
+        matches = []
+        for result in locations:
+            for poi in result.location.all():
+                matches.append(poi)
+        return [self.format_match_db(match) for match in matches]
 
 
 location_finder = Location_Finder()
