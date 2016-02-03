@@ -307,6 +307,14 @@ class Location_Finder(Task):
         matches = response.json().get('clinics')
         return [self.format_match_aat(match) for match in matches]
 
+    def get_aat_category_id(self, search):
+        category = settings.AAT_DEFAULT_CATEGORY
+        for cat_name, cat_value in settings.AAT_CATEGORIES.items():
+            if search.get(cat_name, False):
+                category = cat_name
+                break
+        return settings.AAT_CATEGORIES[category]
+
     def format_match_db(self, match):
         primary = "Clinic Name"
         additional = ["Street Address", "Primary Contact Number"]

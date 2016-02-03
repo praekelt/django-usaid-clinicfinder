@@ -170,7 +170,7 @@ AAT_CATEGORIES = {
     'htc': '77',
     'mmc': '73',
 }
-
+AAT_DEFAULT_CATEGORY = 'mmc'
 
 try:
     from local_settings import *
