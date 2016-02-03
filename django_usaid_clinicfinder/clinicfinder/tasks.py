@@ -271,11 +271,9 @@ class Location_Finder(Task):
 
             matches = matches[:settings.LOCATION_MAX_RESPONSES]
             total = len(matches)
-            if total != 0:
-                output = ' AND '.join(matches)
-            else:
-                output = ""
 
+            output = ' AND '.join(matches)
+   
             lookuppoi.response["results"] = output
             lookuppoi.save()
             l.info("Completed location search. Found: %s" % str(total))
