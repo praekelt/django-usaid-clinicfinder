@@ -297,7 +297,7 @@ class Location_Finder(Task):
                 'url': settings.AAT_API_URL,
                 'username': settings.AAT_USERNAME,
                 'password': settings.AAT_PASSWORD,
-                'category': self.get_aat_category_id,
+                'category': self.get_aat_category_id(lookuppoi.search),
                 'x': lookuppoi.location.point.x,
                 'y': lookuppoi.location.point.y
         }
