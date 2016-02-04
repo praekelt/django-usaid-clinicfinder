@@ -167,7 +167,7 @@ AAT_API_URL = "https://api-info4africa.aat.co.za/api/lookup/GetLocations"
 AAT_USERNAME = ''
 AAT_PASSWORD = ''
 AAT_CATEGORIES = {
-    'htc': '77',
+    'hct': '77',
     'mmc': '73',
 }
 AAT_DEFAULT_CATEGORY = 'mmc'
