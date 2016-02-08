@@ -350,9 +350,14 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
         request_url = responses.calls[0].request.url
         self.assertEqual(request_url, (
-            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
-            "username=&password=&meters=50000&"
-            "category=%d&x=30.83844&y=-29.7894726" % category))
+            "%(url)s?"
+            "username=%(username)s&password=%(password)s&meters=50000&"
+            "category=%(category)d&x=30.83844&y=-29.7894726" % {
+                "url": settings.AAT_API_URL,
+                "username": settings.AAT_USERNAME,
+                "password": settings.AAT_PASSWORD,
+                "category": category,
+            }))
 
     def test_create_lookuppointofinterest_aat_result_hct(self):
         """Test POI lookup using the AAT clinic search API to look forEach

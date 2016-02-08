@@ -28,3 +28,7 @@ LOCATION_MAX_RESPONSES = 2
 VUMI_GO_ACCOUNT_KEY = 'acc-key'
 VUMI_GO_CONVERSATION_KEY = 'conv-key'
 VUMI_GO_ACCOUNT_TOKEN = 'conv-token'
+
+AAT_API_URL = "https://www.example.com/api/lookup/GetLocations"
+AAT_USERNAME = 'aat-username'
+AAT_PASSWORD = 'aat-password'
