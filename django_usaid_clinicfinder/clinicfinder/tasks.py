@@ -267,13 +267,13 @@ class Location_Finder(Task):
             if lookuppoi.search.get('source') == 'aat':
                 matches = self.search_aat(lookuppoi)
             else:
-                matches = self.search_db(lookuppoi)
+                matches = self.search_internal(lookuppoi)
 
             matches = matches[:settings.LOCATION_MAX_RESPONSES]
             total = len(matches)
 
             output = ' AND '.join(matches)
-   
+
             lookuppoi.response["results"] = output
             lookuppoi.save()
             l.info("Completed location search. Found: %s" % str(total))
@@ -313,7 +313,7 @@ class Location_Finder(Task):
                 break
         return settings.AAT_CATEGORIES[category]
 
-    def format_match_db(self, match):
+    def format_match_internal(self, match):
         primary = "Clinic Name"
         additional = ["Street Address", "Primary Contact Number"]
         add_output = ', '.join(
@@ -321,7 +321,7 @@ class Location_Finder(Task):
             if key in match.data and match.data[key] != "")
         return "%s (%s)" % (match.data[primary], add_output)
 
-    def search_db(self, lookuppoi):
+    def search_internal(self, lookuppoi):
         ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
         locations = Location.objects.filter(
             point__distance_lte=(
@@ -332,7 +332,7 @@ class Location_Finder(Task):
         for result in locations:
             for poi in result.location.all():
                 matches.append(poi)
-        return [self.format_match_db(match) for match in matches]
+        return [self.format_match_internal(match) for match in matches]
 
 
 location_finder = Location_Finder()
