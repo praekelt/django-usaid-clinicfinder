@@ -359,9 +359,11 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         d = LookupPointOfInterest.objects.last()
         self.assertEqual(d.search["hct"], "true")
         self.assertEqual(d.search["source"], "aat")
-        self.assertEqual(d.response["results"],
-                         "A sample organsation name (This is the full address) "
-                         "AND Another sample organsation (Room AC0202, 2nd Floor, Block AC)")
+        self.assertEqual(
+            d.response["results"],
+            "A sample organsation name (This is the full address) "
+            "AND Another sample organsation (Room AC0202, 2nd Floor, "
+            "Block AC)")
 
         request_url = responses.calls[0].request.url
         self.assertEqual(request_url, (
@@ -423,9 +425,11 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.response["results"],
-                         "Sample organsation name (This is the full address) "
-                         "AND Another sample organsation name (Room AC0202, 2nd Floor, Block AC)")  
+        self.assertEqual(
+            d.response["results"],
+            "Sample organsation name (This is the full address) "
+            "AND Another sample organsation name (Room AC0202, 2nd Floor, "
+            "Block AC)")
 
         request_url = responses.calls[0].request.url
         self.assertEqual(request_url, (
