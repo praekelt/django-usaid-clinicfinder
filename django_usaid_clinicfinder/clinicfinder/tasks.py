@@ -260,14 +260,15 @@ class Location_Finder(Task):
 
         l.info("Processing new location search")
         try:
-
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
 
-            if lookuppoi.search.get('source') == 'aat':
-                matches = self.search_aat(lookuppoi)
-            else:
-                matches = self.search_internal(lookuppoi)
+            search_method_name = lookuppoi.search.get('source', 'internal')
+            search_method = {
+                'aat': self.search_aat,
+                'internal': self.search_internal,
+            }.get(search_method_name, self.search_internal)
+            matches = search_method(lookuppoi)
 
             matches = matches[:settings.LOCATION_MAX_RESPONSES]
             total = len(matches)
