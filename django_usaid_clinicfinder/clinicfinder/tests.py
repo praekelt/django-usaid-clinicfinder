@@ -248,90 +248,73 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         lpoi = LookupPointOfInterest.objects.last()
         self.assertEqual(lpoi.location, None)
 
-    def test_create_lookuppointofinterest_model_data_no_result(self):
-        # no valid clinic
+    def check_lookuppoi_post_result(self, point, results, search):
         Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
         Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
 
         post_data = {
-            "search": {
-                "mmc": "true",
-                "hiv": "false"
-            },
+            "search": search,
             "response": {
                 "type": "SMS",
                 "to_addr": "+27123",
-                "template": "Your nearest x is: {{ results }}"
+                "template": "Your nearest x is: {{ results }}",
             },
-            "location": self.create_location(29.0000000, -33.0000000)
+            "location": self.create_location(*point),
         }
         response = self.client.post('/clinicfinder/requestlookup/',
                                     json.dumps(post_data),
                                     content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.search["mmc"], "true")
-        self.assertEqual(d.search["hiv"], "false")
-        point = Point(29.0000000, -33.0000000)
-        self.assertEqual(d.location.point, point)
-        self.assertEqual(d.response["results"], "")
+        poi = LookupPointOfInterest.objects.last()
+        self.assertEqual(poi.search, search)
+        self.assertEqual(poi.location.point, Point(*point))
+        self.assertEqual(poi.response["results"], results)
+
+    def test_create_lookuppointofinterest_model_data_no_result(self):
+        """Test lookup of POI that matches no results."""
+        self.check_lookuppoi_post_result(
+            point=(29.0000000, -33.0000000),
+            results="",
+            search={
+                "mmc": "true",
+                "hiv": "false",
+            })
 
     def test_create_lookuppointofinterest_model_data_2_result(self):
-        # 4 valid clinics, shows two
-        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-
-        post_data = {
-            "search": {
-                "hct": "true"
-            },
-            "response": {
-                "type": "SMS",
-                "to_addr": "+27123",
-                "template": "Your nearest x is: {{ results }}"
-            },
-            "location": self.create_location(18.71208, -33.85105)
-        }
-        response = self.client.post('/clinicfinder/requestlookup/',
-                                    json.dumps(post_data),
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.response["results"],
-                         "Harmonie Clinic (0219806185/6205) "
-                         "AND Hazendal Satellite Clinic (216969920)")
+        """Test POI lookup that returns two of the four valid clinics"""
+        self.check_lookuppoi_post_result(
+            point=(18.71208, -33.85105),
+            results=(
+                "Harmonie Clinic (0219806185/6205) "
+                "AND Hazendal Satellite Clinic (216969920)"
+            ),
+            search={
+                "hct": "true",
+            }
+        )
 
     def test_create_lookuppointofinterest_model_internal_result_hct(self):
-        # 4 valid clinics, shows two
-        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-
-        post_data = {
-            "search": {
+        """Test POI lookup that explicitly asks for an internal clinic database
+           search.
+           """
+        self.check_lookuppoi_post_result(
+            point=(18.71208, -33.85105),
+            results=(
+                "Harmonie Clinic (0219806185/6205) "
+                "AND Hazendal Satellite Clinic (216969920)"
+            ),
+            search={
                 "hct": "true",
-                "source": "internal"
-            },
-            "response": {
-                "type": "SMS",
-                "to_addr": "+27123",
-                "template": "Your nearest x is: {{ results }}"
-            },
-            "location": self.create_location(18.71208, -33.85105)
-        }
-        response = self.client.post('/clinicfinder/requestlookup/',
-                                    json.dumps(post_data),
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.response["results"],
-                         "Harmonie Clinic (0219806185/6205) "
-                         "AND Hazendal Satellite Clinic (216969920)")
+                "source": "internal",
+            }
+        )
 
     @responses.activate
     def test_create_lookuppointofinterest_aat_result_hct(self):
+        """Test POI lookup using the AAT clinic search API to look forEach
+           an HCT clinic.
+           """
         response_json = {
             "clinics": [{
                 "OrganisationName": "A sample organsation name",
@@ -362,35 +345,18 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             body=json.dumps(response_json), status=200,
             content_type='application/json')
 
-        # 4 valid clinics, shows two
-        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-
-        post_data = {
-            "search": {
+        self.check_lookuppoi_post_result(
+            point=(30.83844, -29.7894726),
+            results=(
+                "A sample organsation name (This is the full address) "
+                "AND Another sample organsation (Room AC0202, 2nd Floor, "
+                "Block AC)"
+            ),
+            search={
                 "hct": "true",
-                "source": "aat"
-            },
-            "response": {
-                "type": "SMS",
-                "to_addr": "+27123",
-                "template": "Your nearest x is: {{ results }}"
-            },
-            "location": self.create_location(30.83844, -29.7894726)
-        }
-        response = self.client.post('/clinicfinder/requestlookup/',
-                                    json.dumps(post_data),
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        d = LookupPointOfInterest.objects.last()
-        self.assertEqual(d.search["hct"], "true")
-        self.assertEqual(d.search["source"], "aat")
-        self.assertEqual(
-            d.response["results"],
-            "A sample organsation name (This is the full address) "
-            "AND Another sample organsation (Room AC0202, 2nd Floor, "
-            "Block AC)")
+                "source": "aat",
+            }
+        )
 
         request_url = responses.calls[0].request.url
         self.assertEqual(request_url, (
@@ -400,6 +366,9 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
 
     @responses.activate
     def test_create_lookuppointofinterest_aat_result_mmc(self):
+        """Test POI lookup using the AAT clinic search API to look forEach
+           an MMC clinic.
+           """
         response_json = {
             "clinics": [{
                 "OrganisationName": "Sample organsation name",
@@ -430,33 +399,18 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             body=json.dumps(response_json), status=200,
             content_type='application/json')
 
-        # 4 valid clinics, shows two
-        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
-
-        post_data = {
-            "search": {
+        self.check_lookuppoi_post_result(
+            point=(30.83844, -29.7894726),
+            results=(
+                "A sample organsation name (This is the full address) "
+                "AND Another sample organsation (Room AC0202, 2nd Floor, "
+                "Block AC)"
+            ),
+            search={
                 "mmc": "true",
-                "source": "aat"
-            },
-            "response": {
-                "type": "SMS",
-                "to_addr": "+27123",
-                "template": "Your nearest x is: {{ results }}"
-            },
-            "location": self.create_location(30.83844, -29.7894726)
-        }
-        response = self.client.post('/clinicfinder/requestlookup/',
-                                    json.dumps(post_data),
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        d = LookupPointOfInterest.objects.last()
-        self.assertEqual(
-            d.response["results"],
-            "Sample organsation name (This is the full address) "
-            "AND Another sample organsation name (Room AC0202, 2nd Floor, "
-            "Block AC)")
+                "source": "aat",
+            }
+        )
 
         request_url = responses.calls[0].request.url
         self.assertEqual(request_url, (
