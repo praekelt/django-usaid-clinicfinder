@@ -303,6 +303,33 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
                          "Harmonie Clinic (0219806185/6205) "
                          "AND Hazendal Satellite Clinic (216969920)")
 
+    def test_create_lookuppointofinterest_model_internal_result_hct(self):
+        # 4 valid clinics, shows two
+        Location_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+        Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
+
+        post_data = {
+            "search": {
+                "hct": "true",
+                "source": "internal"
+            },
+            "response": {
+                "type": "SMS",
+                "to_addr": "+27123",
+                "template": "Your nearest x is: {{ results }}"
+            },
+            "location": self.create_location(18.71208, -33.85105)
+        }
+        response = self.client.post('/clinicfinder/requestlookup/',
+                                    json.dumps(post_data),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        d = LookupPointOfInterest.objects.last()
+        self.assertEqual(d.response["results"],
+                         "Harmonie Clinic (0219806185/6205) "
+                         "AND Hazendal Satellite Clinic (216969920)")
+
     @responses.activate
     def test_create_lookuppointofinterest_aat_result_hct(self):
         response_json = {

@@ -324,10 +324,13 @@ class Location_Finder(Task):
 
     def search_internal(self, lookuppoi):
         ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
+        # create location data search dictionary
+        search = lookuppoi.search.copy()
+        search.pop('source', None)
         locations = Location.objects.filter(
             point__distance_lte=(
                 lookuppoi.location.point, ringfence)).filter(
-            location__data__contains=lookuppoi.search).distance(
+            location__data__contains=search).distance(
             lookuppoi.location.point).order_by('distance')
         matches = []
         for result in locations:
