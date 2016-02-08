@@ -311,41 +311,54 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
         )
 
     @responses.activate
-    def test_create_lookuppointofinterest_aat_result_hct(self):
-        """Test POI lookup using the AAT clinic search API to look forEach
-           an HCT clinic.
-           """
+    def check_lookuppoi_aat_result(self, point, results, search, category):
+        point_x, point_y = point
+
         response_json = {
             "clinics": [{
                 "OrganisationName": "A sample organsation name",
                 "FullAddress": "This is the full address",
-                "Y": -29.831989288330078,
-                "X": 30.971157073974609,
+                "Y": point_y,
+                "X": point_x,
                 "Province": "KwaZulu-Natal",
                 "Town": "Durban",
                 "Suburb": "Sherwood",
                 "Road": "Locksley Drive",
-                "DistanceMeters": 13649.0},
+                "DistanceMeters": 13649.0
+                },
                 {
                 "OrganisationName": "Another sample organsation",
                 "FullAddress": "Room AC0202, 2nd Floor, Block AC",
-                "Y": -29.837795257568359,
-                "X": 30.988857269287109,
+                "Y": point_y,
+                "X": point_x,
                 "Province": "KwaZulu-Natal",
                 "Town": "Durban",
                 "Suburb": "",
                 "Road": "Ward Road",
                 "DistanceMeters": 15474.0
             }],
-            "searchY": -29.7894726,
-            "searchX": 30.83844}
+            "searchY": point_y,
+            "searchX": point_x,
+        }
 
         responses.add(
             responses.GET, settings.AAT_API_URL,
             body=json.dumps(response_json), status=200,
             content_type='application/json')
 
-        self.check_lookuppoi_post_result(
+        self.check_lookuppoi_post_result(point, results, search)
+
+        request_url = responses.calls[0].request.url
+        self.assertEqual(request_url, (
+            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
+            "username=&password=&meters=50000&"
+            "category=%d&x=30.83844&y=-29.7894726" % category))
+
+    def test_create_lookuppointofinterest_aat_result_hct(self):
+        """Test POI lookup using the AAT clinic search API to look forEach
+           an HCT clinic.
+           """
+        self.check_lookuppoi_aat_result(
             point=(30.83844, -29.7894726),
             results=(
                 "A sample organsation name (This is the full address) "
@@ -355,51 +368,15 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             search={
                 "hct": "true",
                 "source": "aat",
-            }
+            },
+            category=77,
         )
 
-        request_url = responses.calls[0].request.url
-        self.assertEqual(request_url, (
-            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
-            "username=&password=&meters=50000&"
-            "category=77&x=30.83844&y=-29.7894726"))
-
-    @responses.activate
     def test_create_lookuppointofinterest_aat_result_mmc(self):
         """Test POI lookup using the AAT clinic search API to look forEach
            an MMC clinic.
            """
-        response_json = {
-            "clinics": [{
-                "OrganisationName": "Sample organsation name",
-                "FullAddress": "This is the full address",
-                "Y": -29.831989288330078,
-                "X": 30.971157073974609,
-                "Province": "KwaZulu-Natal",
-                "Town": "Durban",
-                "Suburb": "Sherwood",
-                "Road": "Locksley Drive",
-                "DistanceMeters": 13649.0},
-                {
-                "OrganisationName": "Another sample organsation name",
-                "FullAddress": "Room AC0202, 2nd Floor, Block AC",
-                "Y": -29.837795257568359,
-                "X": 30.988857269287109,
-                "Province": "KwaZulu-Natal",
-                "Town": "Durban",
-                "Suburb": "",
-                "Road": "Ward Road",
-                "DistanceMeters": 15474.0
-            }],
-            "searchY": -29.7894726,
-            "searchX": 30.83844}
-
-        responses.add(
-            responses.GET, settings.AAT_API_URL,
-            body=json.dumps(response_json), status=200,
-            content_type='application/json')
-
-        self.check_lookuppoi_post_result(
+        self.check_lookuppoi_aat_result(
             point=(30.83844, -29.7894726),
             results=(
                 "A sample organsation name (This is the full address) "
@@ -409,14 +386,9 @@ class TestClinicFinderDataStorage(AuthenticatedAPITestCase):
             search={
                 "mmc": "true",
                 "source": "aat",
-            }
+            },
+            category=73,
         )
-
-        request_url = responses.calls[0].request.url
-        self.assertEqual(request_url, (
-            "https://api-info4africa.aat.co.za/api/lookup/GetLocations?"
-            "username=&password=&meters=50000&"
-            "category=73&x=30.83844&y=-29.7894726"))
 
     def test_fire_metric(self):
         Metric_Sender.vumi_client = lambda x: LoggingSender('go_http.test')
