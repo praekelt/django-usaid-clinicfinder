@@ -252,14 +252,6 @@ class Location_Finder(Task):
         code.
         """
 
-    def format_match(self, match):
-        primary = "Clinic Name"
-        additional = ["Street Address", "Primary Contact Number"]
-        add_output = ', '.join(
-            match.data[key] for key in additional
-            if key in match.data and match.data[key] != "")
-        return "%s (%s)" % (match.data[primary], add_output)
-
     def run(self, lookuppointofinterest_id, **kwargs):
         """
         Returns a filtered list of locations for query
@@ -268,39 +260,20 @@ class Location_Finder(Task):
 
         l.info("Processing new location search")
         try:
-
-            ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
             lookuppoi = LookupPointOfInterest.objects.get(
                 pk=lookuppointofinterest_id)
 
-            if lookuppoi.search.get('source') == 'aat':
-                matches = self.run_att(lookuppoi)
-                submission = matches[:settings.LOCATION_MAX_RESPONSES]
-                total = len(submission)
-                if total != 0:
-                    output = ' AND '.join(self.format_match_aat(match)
-                                          for match in submission)
-                else:
-                    output = ""
+            search_method_name = lookuppoi.search.get('source', 'internal')
+            search_method = {
+                'aat': self.search_aat,
+                'internal': self.search_internal,
+            }.get(search_method_name, self.search_internal)
+            matches = search_method(lookuppoi)
 
-            else:
-                locations = Location.objects.filter(
-                    point__distance_lte=(
-                        lookuppoi.location.point, ringfence)).filter(
-                    location__data__contains=lookuppoi.search).distance(
-                    lookuppoi.location.point).order_by('distance')
-                matches = []
-                for result in locations:
-                    for poi in result.location.all():
-                        matches.append(poi)
+            matches = matches[:settings.LOCATION_MAX_RESPONSES]
+            total = len(matches)
 
-                submission = matches[:settings.LOCATION_MAX_RESPONSES]
-                total = len(submission)
-                if total != 0:
-                    output = ' AND '.join(self.format_match(match)
-                                          for match in submission)
-                else:
-                    output = ""
+            output = ' AND '.join(matches)
 
             lookuppoi.response["results"] = output
             lookuppoi.save()
@@ -318,18 +291,52 @@ class Location_Finder(Task):
             match.get('OrganisationName'),
             match.get('FullAddress'))
 
-    def run_att(self, lookuppoi):
+    def search_aat(self, lookuppoi):
         url = (
             "%(url)s?username=%(username)s&password=%(password)s&meters=50000"
-            "&category=77&x=%(x)s&y=%(y)s") % {
+            "&category=%(category)s&x=%(x)s&y=%(y)s") % {
                 'url': settings.AAT_API_URL,
                 'username': settings.AAT_USERNAME,
                 'password': settings.AAT_PASSWORD,
+                'category': self.get_aat_category_id(lookuppoi.search),
                 'x': lookuppoi.location.point.x,
                 'y': lookuppoi.location.point.y
         }
         response = requests.get(url, verify=False)
-        return response.json().get('clinics')
+        matches = response.json().get('clinics')
+        return [self.format_match_aat(match) for match in matches]
+
+    def get_aat_category_id(self, search):
+        category = settings.AAT_DEFAULT_CATEGORY
+        for cat_name, cat_value in settings.AAT_CATEGORIES.items():
+            if search.get(cat_name, False):
+                category = cat_name
+                break
+        return settings.AAT_CATEGORIES[category]
+
+    def format_match_internal(self, match):
+        primary = "Clinic Name"
+        additional = ["Street Address", "Primary Contact Number"]
+        add_output = ', '.join(
+            match.data[key] for key in additional
+            if key in match.data and match.data[key] != "")
+        return "%s (%s)" % (match.data[primary], add_output)
+
+    def search_internal(self, lookuppoi):
+        ringfence = Distance(km=settings.LOCATION_SEARCH_RADIUS)
+        # create location data search dictionary
+        search = lookuppoi.search.copy()
+        search.pop('source', None)
+        locations = Location.objects.filter(
+            point__distance_lte=(
+                lookuppoi.location.point, ringfence)).filter(
+            location__data__contains=search).distance(
+            lookuppoi.location.point).order_by('distance')
+        matches = []
+        for result in locations:
+            for poi in result.location.all():
+                matches.append(poi)
+        return [self.format_match_internal(match) for match in matches]
 
 
 location_finder = Location_Finder()

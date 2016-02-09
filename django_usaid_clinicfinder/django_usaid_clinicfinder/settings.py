@@ -166,7 +166,11 @@ LOCATION_SEARCH_RADIUS = 10  # KM
 AAT_API_URL = "https://api-info4africa.aat.co.za/api/lookup/GetLocations"
 AAT_USERNAME = ''
 AAT_PASSWORD = ''
-
+AAT_CATEGORIES = {
+    'hct': '77',
+    'mmc': '73',
+}
+AAT_DEFAULT_CATEGORY = 'mmc'
 
 try:
     from local_settings import *

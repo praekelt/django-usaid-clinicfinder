@@ -14,3 +14,5 @@ celery
 django-celery
 redis
 go-http==0.3.0
+responses
+requests
