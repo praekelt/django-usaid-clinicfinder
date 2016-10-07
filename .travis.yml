@@ -8,7 +8,7 @@ env:
 
 # command to install requirements
 install:
-  - pip install -r ./django_usaid_clinicfinder/requirements.txt --use-mirrors
+  - pip install -r ./django_usaid_clinicfinder/requirements.txt
 
 before_script:
   - psql template1 -c 'create extension hstore;'
