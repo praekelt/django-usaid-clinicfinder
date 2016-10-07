@@ -5,7 +5,7 @@ celery==3.1.23
 contextlib2==0.5.1
 cookies==2.2.1
 dj-database-url==0.4.0
-Django==1.7.2
+Django==1.7.11
 django-celery==3.1.17
 django-filter==0.9.2
 django-grappelli==2.6.3
